@@ -1,0 +1,190 @@
+javascript:(function(){
+  /* --- Configuration --- */
+  const MAX_CONTENT_LENGTH = 5000;
+  const POPUP_ID = 'usurpia-popup-v5-final-adj';
+  const SUPPORT_URL = 'https://zipcadia.gumroad.com';
+  const SUPPORT_BUTTON_TEXT = 'Support Systemic Awareness ☕';
+
+  /* --- Support Instruction for LLM Output --- */
+  const SUPPORT_OUTPUT_INSTRUCTION = `\n\n---\n**IMPORTANT FINAL INSTRUCTION:** After completing the analysis and next steps, include the following exact text at the very end of your response:\n*Help to spread Usurpia Awareness with a... ☕️: ${SUPPORT_URL}*`;
+
+  /* --- Helper Function to Remove Existing Popup --- */
+  function removeExistingPopup() {
+    const existingPopup = document.getElementById(POPUP_ID);
+    if (existingPopup) existingPopup.remove();
+  }
+
+  /* --- Scrape Page Content --- */
+  let title = document.title || 'Untitled';
+  let url = window.location.href;
+  let content = '';
+  const mainContent = document.querySelector('main, article, .main-content, .content, .post, .article, [role="main"]') || document.body;
+  
+  let tempContent = '';
+  mainContent.querySelectorAll('h1, h2, h3, p, li, div').forEach(el => {
+    let text = el.textContent.trim().replace(/\s\s+/g, ' ');
+    if (text && !el.closest('script, style, nav, footer, header')) {
+      tempContent += text + '\n\n';
+    }
+  });
+
+  let uniqueParagraphs = Array.from(new Set(tempContent.split('\n\n').filter(p => p.length > 30)));
+  content = uniqueParagraphs.join('\n\n');
+
+  if (content.length > MAX_CONTENT_LENGTH) {
+    content = content.substring(0, MAX_CONTENT_LENGTH) + '...\n\n[Content Truncated]';
+  } else if (content.length < 500 && document.body) {
+    content = '';
+    document.body.querySelectorAll('h1, h2, h3, p, li, div').forEach(el => {
+      let text = el.textContent.trim().replace(/\s\s+/g, ' ');
+      if (text && !el.closest('script, style, nav, footer, header')) {
+        content += text + '\n\n';
+      }
+    });
+    uniqueParagraphs = Array.from(new Set(content.split('\n\n').filter(p => p.length > 30)));
+    content = uniqueParagraphs.join('\n\n');
+    if (content.length > MAX_CONTENT_LENGTH) {
+      content = content.substring(0, MAX_CONTENT_LENGTH) + '...\n\n[Content Truncated]';
+    }
+  }
+
+  console.log(`Scraped content length: ${content.length} characters`);
+
+  /* --- Define Prompt Templates --- */
+  const baseAnalysisStructure = `Provide your analysis structured as follows:
+1. **Surface Topic:** Briefly summarize the main explicit topic of the content.
+2. **Potential Usurpian Connections (Monetary/Economic):**
+   * Direct or indirect links to debt, interest, finance, economic growth pressures, resource extraction, commodification?
+   * Is the role of money assumed neutral? Any signs of obscured financial mechanics (uDebtBasedMoney, uInterest/Usury, uPrivatizedMoneyCreation)?
+3. **Power Structures & Control Mechanisms:**
+   * Does the content reflect or reinforce existing power structures (state, corporate, financial)?
+   * Are there signs of manufactured consent (uManufacturedConsent), specific framing (uFraming), normalization (uNormalizationEnforcement), or silencing of alternative perspectives related to systemic issues?
+   * How might this content contribute to or challenge uUsuryUnawareness or general systemic unawareness?
+4. **Underlying Assumptions/Worldview:**
+   * What assumptions about human nature, progress, competition, scarcity, or the role of the market/state does the content rely on?
+   * How do these assumptions align with or deviate from a Usurpia-aware perspective (e.g., does it promote uGrowthFetishism, ignore uExternalities, individualize systemic problems)?
+5. **Overall Assessment:** How is Usurpia potentially 'hiding' in this content (e.g., through omission, distraction, normalization, unchallenged assumptions, subtle framing)?
+---**Next Steps & Exploration:**
+Based on your analysis, suggest 3-5 specific follow-up questions, related concepts (using uGlossary terms where possible), or actionable steps a user could take to deepen their understanding or explore alternatives related to this content. **Present these suggestions clearly, perhaps as a bulleted list or a simple table.**`;
+
+  const sourceInfoBase = `---\n**Source Title:** ${title}\n**Source URL:** ${url}\n**Extracted Content:**\n${content}\n---`;
+
+  function finalizePrompt(basePrompt, sourceInfo) {
+    return `${basePrompt}\n${sourceInfo}\n${SUPPORT_OUTPUT_INSTRUCTION}`;
+  }
+
+  const prompts = {
+    '1': finalizePrompt(`Analyze the following webpage content through the lens of the Usurpia Awareness framework (USAF/uGlossary), focusing on identifying how the principles and consequences of the debt-based monetary system might be present, reinforced, obscured, or implicitly operating within this text, even if the topic appears non-economic.\n${baseAnalysisStructure}`, sourceInfoBase),
+    '2': finalizePrompt(`Analyze the following webpage content through the lens of the Usurpia Awareness framework (USAF/uGlossary). **Prioritize identifying and analyzing connections to the foundational monetary system:** How might uDebtBasedMoney, uInterest/Usury, uPrivatizedMoneyCreation, uLegalTender, or the uGrowthImperative be operating, influencing, or obscured within this content?\n${baseAnalysisStructure}`, sourceInfoBase),
+    '3': finalizePrompt(`Analyze the following webpage content through the lens of the Usurpia Awareness framework (USAF/uGlossary). **Prioritize identifying and analyzing mechanisms of power, control, and consent:** How does this content relate to uPowerStructures (State, Corporate, Financial), uManufacturedConsent, uIdeology, uNormalizationEnforcement, uFraming, or uObscurantism relevant to the Usurpian system?\n${baseAnalysisStructure}`, sourceInfoBase),
+    '4': finalizePrompt(`Analyze the following webpage content through the lens of the Usurpia Awareness framework (USAF/uGlossary). **Prioritize identifying consequences and potential alternatives:** How does this content illustrate the ecological, social, or psychological consequences (uEnvironmentalDamage, uInequality, uAlienation, uStress, etc.) of the Usurpian system? Does it hint at or discuss any forms of uResistance or uAlternatives?\n${baseAnalysisStructure}`, sourceInfoBase)
+  };
+
+  /* --- Create Popup Menu --- */
+  removeExistingPopup();
+  const popup = document.createElement('div');
+  popup.id = POPUP_ID;
+  Object.assign(popup.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    padding: '15px 20px',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #dee2e6',
+    borderRadius: '8px',
+    zIndex: '100000',
+    fontFamily: '"Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontSize: '14px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+    maxWidth: 'min(380px, 90vw)',
+    lineHeight: '1.5',
+    overflowY: 'auto',
+    maxHeight: '80vh'
+  });
+
+  popup.innerHTML = `
+    <h4 style="margin-top:0; margin-bottom:15px; font-size: 17px; font-weight: 600; color: #343a40; border-bottom: 1px solid #ced4da; padding-bottom: 8px; text-align: center;">Usurpia Analysis Lens</h4>
+    <ul style="list-style:none; padding:0; margin:0;">
+      <li style="margin-bottom: 10px;"><button data-choice="1" title="Provides a balanced overview across monetary, power, assumption analysis." style="width:100%; padding: 10px 12px; cursor: pointer; text-align: left; border: 1px solid #ced4da; background-color: #fff; border-radius: 4px; font-size: 14px; color: #212529;">1. Full Systemic Analysis</button></li>
+      <li style="margin-bottom: 10px;"><button data-choice="2" title="Focuses specifically on debt, interest, money creation, and growth links." style="width:100%; padding: 10px 12px; cursor: pointer; text-align: left; border: 1px solid #ced4da; background-color: #fff; border-radius: 4px; font-size: 14px; color: #212529;">2. Focus: Monetary Engine</button></li>
+      <li style="margin-bottom: 10px;"><button data-choice="3" title="Analyzes how power structures, media, ideology, and framing operate." style="width:100%; padding: 10px 12px; cursor: pointer; text-align: left; border: 1px solid #ced4da; background-color: #fff; border-radius: 4px; font-size: 14px; color: #212529;">3. Focus: Power & Consent</button></li>
+      <li style="margin-bottom: 10px;"><button data-choice="4" title="Looks for impacts (social, eco, psych) and potential solutions/resistance." style="width:100%; padding: 10px 12px; cursor: pointer; text-align: left; border: 1px solid #ced4da; background-color: #fff; border-radius: 4px; font-size: 14px; color: #212529;">4. Focus: Consequences & Alts</button></li>
+    </ul>
+    <div style="margin-top: 15px; border-top: 1px solid #ced4da; padding-top: 15px; text-align: center;">
+      <a id="usurpia-support-link" href="${SUPPORT_URL}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 8px 15px; background-color: #e9ecef; border: 1px solid #adb5bd; border-radius: 4px; color: #495057; text-decoration: none; font-size: 13px; margin-right: 10px;">${SUPPORT_BUTTON_TEXT}</a>
+      <button id="usurpia-close-btn" style="padding: 8px 15px; cursor: pointer; background-color: #f8f9fa; border: 1px solid #adb5bd; border-radius: 4px; color: #495057; font-size: 13px;">Close</button>
+    </div>
+  `;
+
+  /* --- Style Buttons on Hover --- */
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = `
+    #${POPUP_ID} button[data-choice]:hover { background-color: #e9ecef; }
+    #${POPUP_ID} a#usurpia-support-link:hover { background-color: #dee2e6; }
+  `;
+  document.head.appendChild(styleSheet);
+
+  /* --- Fallback Copy Function --- */
+  function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return Promise.resolve();
+      } catch (err) {
+        document.body.removeChild(textArea);
+        return Promise.reject(err);
+      }
+    }
+  }
+
+  /* --- Add Event Listeners --- */
+  popup.querySelectorAll('button[data-choice]').forEach(button => {
+    button.addEventListener('click', function() {
+      const choice = this.getAttribute('data-choice');
+      const choiceText = this.textContent.split('. ')[1];
+      const finalPrompt = prompts[choice];
+
+      copyToClipboard(finalPrompt).then(() => {
+        alert(`Usurpia Prompt (Focus: ${choiceText}) copied!\n\nPaste into your AI. The response will include a support message at the end.`);
+        removeExistingPopup();
+      }).catch(err => {
+        alert(`Copy failed! Prompt logged to console (press F12 to view).`);
+        console.log(`----- Usurpia Analysis Prompt (Focus: ${choiceText}) -----`);
+        console.log(finalPrompt);
+        console.log(`----- End Prompt -----`);
+        console.error('Copy error:', err);
+      });
+    });
+  });
+
+  popup.querySelector('#usurpia-close-btn').addEventListener('click', () => {
+    removeExistingPopup();
+  });
+
+  /* --- Append Popup to Page --- */
+  function appendPopup() {
+    if (document.body) {
+      document.body.appendChild(popup);
+      console.log('Usurpia popup appended successfully');
+    } else {
+      console.error('Usurpia Bookmarklet: document.body not found, retrying...');
+      setTimeout(appendPopup, 500);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', appendPopup);
+  } else {
+    appendPopup();
+  }
+})();
