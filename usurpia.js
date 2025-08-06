@@ -1,13 +1,13 @@
-// Usurpia Lens Bookmarklet - V2.2 (The "Full Spectrum" Model)
-// This version incorporates the complete, collaboratively expanded dictionary.
-// It maps the system's influence from core mechanics to personal experience.
+// Usurpia Lens Bookmarklet - V2.3 (The "Diagnostic Scanner" Model)
+// This version integrates the full, categorized dictionary with a scrollbar heat map,
+// allowing for instant visualization and navigation of systemic language.
 
 (function() {
 
     // --- CONFIGURATION & DICTIONARY ---
     const config = {
         settings: {
-            maxHighlights: 15, // An intelligent cap to prevent overwhelm and encourage curiosity.
+            maxHighlights: 15,
             depth: 'summary'
         },
         dictionary: [
@@ -339,7 +339,7 @@
         }))
     };
 
-    // --- CORE LOGIC (V1.6 - Smart Cap Model) ---
+    // --- CORE LOGIC ---
 
     function main() {
         if (document.getElementById('usurpia-popup')) {
@@ -351,6 +351,7 @@
         const popup = createPopup();
         highlightKeywords();
         setupEventListeners(popup);
+        createScrollbarMarks();
     }
 
     function injectStyles() {
@@ -362,6 +363,9 @@
             #usurpia-popup p { margin: 0 0 12px 0; padding: 0; }
             #usurpia-popup a { color: #007bff !important; text-decoration: underline !important; display: block; margin-top: 5px; }
             #usurpia-popup .usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+            #usurpia-scrollbar { position: fixed; top: 0; right: 0; width: 10px; height: 100%; background: rgba(200, 200, 200, 0.3); z-index: 999999998; }
+            .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF0000; opacity: 0.7; }
+            .usurpia-scrollbar-mark:hover { opacity: 1; cursor: pointer; }
         `;
         document.head.appendChild(style);
     }
@@ -388,11 +392,7 @@
 
         textNodes.forEach(node => {
             node.nodeValue.replace(masterRegex, (match, offset) => {
-                candidates.push({
-                    node,
-                    match,
-                    offset
-                });
+                candidates.push({ node, match, offset });
             });
         });
 
@@ -405,44 +405,62 @@
             highlightsToPerform = candidates.slice(0, config.settings.maxHighlights);
         }
 
-        const groupedByNode = highlightsToPerform.reduce((acc, {
-            node,
-            match,
-            offset
-        }) => {
+        const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset }) => {
             const key = node.textContent;
-            if (!acc.has(key)) acc.set(key, {
-                node,
-                matches: []
-            });
-            acc.get(key).matches.push({
-                match,
-                offset
-            });
+            if (!acc.has(key)) acc.set(key, { node, matches: [] });
+            acc.get(key).matches.push({ match, offset });
             return acc;
         }, new Map());
 
-        groupedByNode.forEach(({
-            node,
-            matches
-        }) => {
-            matches.sort((a, b) => b.offset - a.offset); // Process from end to start
-            matches.forEach(({
-                match,
-                offset
-            }) => {
-                const primaryTerm = config.dictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t))).primaryTerm;
-                const span = document.createElement('span');
-                span.className = 'usurpia-highlight';
-                span.setAttribute('data-term', primaryTerm);
-                span.textContent = match;
+        groupedByNode.forEach(({ node, matches }) => {
+            matches.sort((a, b) => b.offset - a.offset);
+            matches.forEach(({ match, offset }) => {
+                const entry = config.dictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t)));
+                if (entry) {
+                    const primaryTerm = entry.primaryTerm;
+                    const span = document.createElement('span');
+                    span.className = 'usurpia-highlight';
+                    span.setAttribute('data-term', primaryTerm);
+                    span.textContent = match;
 
-                const range = document.createRange();
-                range.setStart(node, offset);
-                range.setEnd(node, offset + match.length);
-                range.deleteContents();
-                range.insertNode(span);
+                    const range = document.createRange();
+                    range.setStart(node, offset);
+                    range.setEnd(node, offset + match.length);
+                    range.deleteContents();
+                    range.insertNode(span);
+                }
             });
+        });
+    }
+
+    function createScrollbarMarks() {
+        const scrollbar = document.createElement('div');
+        scrollbar.id = 'usurpia-scrollbar';
+        document.body.appendChild(scrollbar);
+
+        const highlights = document.querySelectorAll('.usurpia-highlight');
+        if (highlights.length === 0) return;
+
+        const docHeight = Math.max(
+            document.body.scrollHeight, document.documentElement.scrollHeight,
+            document.body.offsetHeight, document.documentElement.offsetHeight,
+            document.body.clientHeight, document.documentElement.clientHeight
+        );
+
+        highlights.forEach(highlight => {
+            const rect = highlight.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const absoluteTop = rect.top + scrollTop;
+            const relativePosition = (absoluteTop / docHeight) * 100;
+
+            const mark = document.createElement('div');
+            mark.className = 'usurpia-scrollbar-mark';
+            mark.style.top = `${relativePosition}%`;
+            mark.title = `Jump to "${highlight.textContent}"`;
+            mark.addEventListener('click', () => {
+                highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            scrollbar.appendChild(mark);
         });
     }
 
@@ -464,7 +482,9 @@
             }
         });
         document.body.addEventListener('mouseout', e => {
-            if (e.target.classList.contains('usurpia-highlight') && !popup.matches(':hover')) popup.style.display = 'none';
+            if (e.target.classList.contains('usurpia-highlight') && !popup.matches(':hover')) {
+                popup.style.display = 'none';
+            }
         });
         popup.addEventListener('mouseleave', () => {
             popup.style.display = 'none';
