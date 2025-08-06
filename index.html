@@ -9,11 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --background-color: #1a1a1a;
+            --background-color: #121212;
             --text-color: #eaeaea;
             --primary-accent: #FFFF99;
-            --secondary-accent: #007bff;
+            --secondary-accent: #3391ff;
             --container-width: 800px;
+            --surface-color: #1e1e1e;
+            --border-color: #333;
         }
 
         body {
@@ -32,19 +34,19 @@
         }
 
         header h1 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 900;
             margin-bottom: 0.5rem;
-            letter-spacing: -2px;
+            letter-spacing: -2.5px;
             color: white;
         }
         
         header h1 span {
             color: var(--primary-accent);
-            text-shadow: 0 0 5px rgba(255, 255, 153, 0.3);
+            text-shadow: 0 0 8px rgba(255, 255, 153, 0.3);
         }
 
-        header p {
+        header p.subtitle {
             font-size: 1.25rem;
             color: #b3b3b3;
             max-width: 600px;
@@ -53,7 +55,7 @@
 
         .section {
             padding: 3rem 0;
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--border-color);
         }
         
         .section h2 {
@@ -72,11 +74,12 @@
         }
         
         .installer-box {
-            background-color: #252525;
-            border: 1px solid #444;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 2.5rem;
             margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
         .bookmarklet-button {
@@ -124,12 +127,18 @@
         }
         
         .next-step-card {
-            background-color: #252525;
-            border: 1px solid #444;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
             padding: 2rem;
             border-radius: 12px;
             flex-basis: 45%;
             text-align: left;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .next-step-card:hover {
+            transform: translateY(-5px);
+            border-color: #555;
         }
 
         .next-step-card h3 {
@@ -153,13 +162,22 @@
             margin-top: 4rem;
             font-size: 0.9rem;
             color: #666;
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--border-color);
             padding-top: 2rem;
+        }
+        
+        footer a {
+            color: #888;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--primary-accent);
         }
         
         @media (max-width: 768px) {
             header h1 { font-size: 2.5rem; }
-            header p { font-size: 1.1rem; }
+            header p.subtitle { font-size: 1.1rem; }
             .section h2 { font-size: 2rem; }
             .next-steps { flex-direction: column; }
             .mobile-warning { display: block; }
@@ -172,26 +190,27 @@
 
         <header>
             <h1>See The <span>System</span></h1>
-            <p>That constant hum of anxiety? The feeling that the world is fraying at the seams? It's not just you. You're sensing the predictable decay of a hidden operating system. We built a tool to make it visible.</p>
+            <p class="subtitle">That feeling that the world is fraying at the seams isn't just in your head. It's the predictable decay of a hidden operating system. We built a tool to make it visible.</p>
         </header>
 
         <main>
             <section id="problem" class="section">
-                <h2>Stop Feeling Gaslit By The News</h2>
-                <p>We are told that climate change, soaring inequality, political division, and chronic stress are separate, complex problems. This is a lie designed to keep us overwhelmed and inactive.</p>
-                <p>These are all interconnected symptoms of a single, mathematical design flaw at the heart of our money system. A system that mandates infinite, exponential growth on a finite planet. The chaos you see is not an accident; it's an inevitability.</p>
+                <h2>Stop Being Gaslit By The News</h2>
+                <p>You are told that climate change, soaring inequality, political division, and chronic stress are separate, impossibly complex problems. This is a narrative designed to keep us overwhelmed and inactive.</p>
+                <p>These are all interconnected symptoms of a single design flaw at the heart of our money system—a system that mandates infinite growth on a finite planet. The chaos you see is not an accident; it's the inevitable endgame.</p>
             </section>
 
             <section id="installer" class="section">
-                <h2>We Built A Weapon of Clarity</h2>
-                <p>The Usurpia Lens is a bookmarklet—a simple, powerful tool that lives in your browser. It scans any news article or website you're reading and instantly highlights the system's coded language, revealing the hidden logic beneath the surface.</p>
-                <p><strong>It turns their propaganda into your intelligence.</strong></p>
+                <h2>Install Your Lens</h2>
+                <p>The Usurpia Lens is a bookmarklet—a simple, powerful tool that lives in your browser. It scans any news article or website and instantly highlights the system's coded language, revealing the hidden logic beneath the surface.</p>
+                <p><strong>It transforms their propaganda into your intelligence.</strong></p>
                 
                 <div class="installer-box">
-                    <h2>Install The Lens</h2>
-                    <a id="bookmarklet" class="bookmarklet-button" href="javascript:(function(){var d=document,s=d.createElement('script');s.src='https://YOUR-USERNAME.github.io/YOUR-REPO/usurpia.js?v='+new Date().getTime();d.body.appendChild(s);})();">Drag Me to Your Bookmarks</a>
+                    <h2>Get The Lens</h2>
+                    <!-- FINAL, CORRECT BOOKMARKLET CODE FOR atotsm/usurpia REPO -->
+                    <a id="bookmarklet" class="bookmarklet-button" href="javascript:(function(){var d=document,s=d.createElement('script');s.src='https://atotsm.github.io/usurpia/usurpia.js?v='+new Date().getTime();d.body.appendChild(s);})();">Drag Me to Your Bookmarks</a>
                     <p class="instructions">On a desktop computer, <strong>click and drag this button</strong> to your browser's Bookmarks Bar to install.</p>
-                    <p class="mobile-warning"><strong>Mobile Users:</strong> Bookmarklet installation is tricky on mobile. We recommend visiting this page on a desktop for the best experience.</p>
+                    <p class="mobile-warning"><strong>Mobile Users:</strong> Installation can be tricky on mobile. We recommend visiting this page on a desktop for the best experience.</p>
                 </div>
             </section>
 
@@ -203,14 +222,14 @@
                     <div class="next-step-card">
                         <h3>1. Download The Framework</h3>
                         <p>Get the complete "Lens" document as a free PDF. This is the foundational text that explains the entire Debt-Money Operating System from first principles.</p>
-                        <!-- IMPORTANT: Replace this with your actual link -->
-                        <a href="https://your-site.com/the-lens-download">Download Free PDF &rarr;</a>
+                        <!-- IMPORTANT: Replace this with your actual PDF link when you have one. For now, it links to the GitHub repo. -->
+                        <a href="https://github.com/atotsm/usurpia" target="_blank">Download Free PDF &rarr;</a>
                     </div>
                     <div class="next-step-card">
                         <h3>2. Join The Mission</h3>
                         <p>Ready to act? The Ambassador's Toolkit gives you the strategies and advanced tools to spread this awareness within your own community and networks.</p>
-                        <!-- IMPORTANT: Replace this with your actual link -->
-                        <a href="https://your-gumroad.com/ambassador-toolkit">Get the Toolkit &rarr;</a>
+                        <!-- IMPORTANT: Replace this with your actual Gumroad URL -->
+                        <a href="https://zipcadia.gumroad.com/" target="_blank">Get the Toolkit &rarr;</a>
                     </div>
                 </div>
             </section>
@@ -218,18 +237,22 @@
 
         <footer>
             <p>Knowledge is the first step toward a Voluntary Transformation. The time for tinkering is over.</p>
-            <p>&copy; [Current Year] Project Usurpia. Created with the Usurpian Lens Analyst.</p>
+            <p><a href="https://github.com/atotsm/usurpia/" target="_blank">View Project on GitHub</a></p>
+            <p>&copy; <span id="year"></span> Project Usurpia.</p>
         </footer>
 
     </div>
 
     <script>
-        // A little script to show a more helpful alert for users who just click the button instead of dragging it.
+        // Small script to show a helpful alert for users who click instead of drag.
         const bookmarkletButton = document.getElementById('bookmarklet');
         bookmarkletButton.addEventListener('click', function(e) {
             e.preventDefault();
-            alert('To install, please CLICK and DRAG this button to your bookmarks bar. Don\'t just click it!');
+            alert('To install, please CLICK and DRAG this button to your bookmarks bar. (Don\'t just click it!)');
         });
+        
+        // Small script to dynamically update the year in the footer.
+        document.getElementById('year').textContent = new Date().getFullYear();
     </script>
 </body>
 </html>
