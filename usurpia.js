@@ -1,13 +1,14 @@
-// Usurpia Lens Bookmarklet - V2.5 (The "Interactive Analyzer" Model)
-// Adds a control panel with on/off toggle, highlight density slider, and category filters.
+// Usurpia Lens Bookmarklet - V2.5.1 (The "UI-Fixed" Analyzer)
+// Corrects the layout of the control panel, especially the density slider, for a cleaner UI.
 
 (function() {
 
     // --- CONFIGURATION & DICTIONARY ---
+    // The dictionary remains the same as v2.5.
     const config = {
         settings: {
             maxHighlights: 15,
-            initialState: 'on' // 'on' or 'off'
+            initialState: 'on'
         },
         dictionary: {
             core: {
@@ -110,7 +111,7 @@
             console.log("Usurpia Lens is already active.");
             return;
         }
-        console.log("Usurpia Lens v2.5 Activated.");
+        console.log("Usurpia Lens v2.5.1 Activated.");
         injectStyles();
         const popup = createPopup();
         createControlPanel();
@@ -123,7 +124,7 @@
     }
 
     function runAnalysis() {
-        cleanupHighlights(); // Important: Clean up before running a new analysis
+        cleanupHighlights();
         highlightKeywords(config.settings.maxHighlights);
         createScrollbarMarks();
     }
@@ -133,7 +134,7 @@
         highlights.forEach(span => {
             const parent = span.parentNode;
             parent.replaceChild(document.createTextNode(span.textContent), span);
-            parent.normalize(); // Merges adjacent text nodes
+            parent.normalize();
         });
         const scrollbar = document.getElementById('usurpia-scrollbar');
         if (scrollbar) scrollbar.remove();
@@ -150,7 +151,10 @@
         for (const categoryKey in config.dictionary) {
             categoryStyles += `
                 body.usurpia-hide-${categoryKey} .usurpia-highlight[data-category="${categoryKey}"] {
-                    display: none;
+                    background-color: transparent !important;
+                    color: inherit !important;
+                    cursor: default;
+                    padding: 0;
                 }
             `;
         }
@@ -179,11 +183,14 @@
             .usurpia-scrollbar-mark:hover { opacity: 1; cursor: pointer; }
 
             /* Control Panel Styles */
-            #usurpia-panel { position: fixed; bottom: 20px; left: 20px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 10px; font-family: sans-serif; font-size: 12px; color: #333; }
-            #usurpia-panel-header { padding: 5px; background: #ddd; cursor: move; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; margin: -10px -10px 10px -10px; }
-            #usurpia-panel label { display: block; margin-bottom: 5px; user-select: none; }
-            #usurpia-panel input[type="range"] { width: 100%; }
+            #usurpia-panel { position: fixed; bottom: 20px; left: 20px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 15px; font-family: sans-serif; font-size: 12px; color: #333; width: 200px; }
+            #usurpia-panel-header { padding: 5px; background: #ddd; cursor: move; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; margin: -15px -15px 10px -15px; }
+            #usurpia-panel label { display: flex; align-items: center; margin-bottom: 8px; user-select: none; }
+            #usurpia-panel input[type="range"] { width: 100%; margin-top: 4px; }
+            #usurpia-panel input[type="checkbox"] { margin-right: 8px; }
             #usurpia-panel .usurpia-control-group { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+            #usurpia-panel .usurpia-density-label { display: flex; justify-content: space-between; align-items: center; }
+            #usurpia-panel #usurpia-density-value { font-weight: bold; }
         `;
         document.head.appendChild(style);
     }
@@ -197,26 +204,27 @@
             categoryCheckboxesHTML += `
                 <label>
                     <input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" checked>
-                    ${config.dictionary[categoryKey].name}
+                    <span>${config.dictionary[categoryKey].name}</span>
                 </label>
             `;
         }
 
         panel.innerHTML = `
             <div id="usurpia-panel-header">Usurpia Lens v2.5</div>
-            <div>
-                <label>
-                    <input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}>
-                    <strong>Lens Enabled</strong>
-                </label>
-            </div>
+            <label>
+                <input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}>
+                <strong>Lens Enabled</strong>
+            </label>
             <div class="usurpia-control-group">
-                <label for="usurpia-density-slider">Highlight Density: <span id="usurpia-density-value">${config.settings.maxHighlights}</span></label>
+                <div class="usurpia-density-label">
+                    <span>Highlight Density:</span>
+                    <span id="usurpia-density-value">${config.settings.maxHighlights}</span>
+                </div>
                 <input type="range" id="usurpia-density-slider" min="1" max="50" value="${config.settings.maxHighlights}">
             </div>
             <div class="usurpia-control-group">
                 <strong>Filter Categories:</strong>
-                ${categoryCheckboxesHTML}
+                <div style="margin-top: 5px;">${categoryCheckboxesHTML}</div>
             </div>
         `;
         document.body.appendChild(panel);
@@ -258,7 +266,6 @@
             });
         });
         
-        // Drag functionality
         makeDraggable(panel);
     }
 
@@ -291,9 +298,6 @@
         }
     }
     
-    // The rest of the functions (highlightKeywords, createScrollbarMarks, popup logic, etc.) are largely the same
-    // as v2.4 but are included here for completeness.
-
     function createPopup() {
         let popup = document.createElement('div');
         popup.id = 'usurpia-popup';
