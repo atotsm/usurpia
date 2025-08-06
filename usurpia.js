@@ -1,13 +1,13 @@
-// Usurpia Lens Bookmarklet - V2.5.3 (Hardened & UI-Fixed)
-// Fixes fatal errors, memory leaks, and adds full persistence and touch support.
+// Usurpia Lens Bookmarklet - V2.5.4 (Hardened & UI-Optimized)
+// Fixes fatal errors in highlight logic, memory leaks in drag events, and improves popup behavior and persistence.
 
 (function() {
     // --- CONFIGURATION & DICTIONARY ---
-    // The dictionary remains the same.
     const config = {
         settings: {
             maxHighlights: 15,
-            initialState: 'on'
+            initialState: 'on',
+            categories: {} // Initialize categories object
         },
         dictionary: {
             core: {
@@ -107,9 +107,9 @@
     let eventListeners = [];
     let mutationObserver = null;
     let activePopupTarget = null;
+    let debounceTimeout = null;
 
-    // NEW: Centralized event listener tracking for proper cleanup
-    function addTrackedListener(element, event, handler, options) {
+    function addTrackedListener(element, event, handler, options = {}) {
         element.addEventListener(event, handler, options);
         eventListeners.push({ element, event, handler, options });
     }
@@ -119,8 +119,8 @@
             console.log("Usurpia Lens is already active. Cleaning up and reinitializing.");
             cleanup();
         }
-        console.log("Usurpia Lens v2.5.3 Activated.");
-        loadSettings(); // NEW: Load all settings from localStorage first
+        console.log("Usurpia Lens v2.5.4 Activated.");
+        loadSettings();
         injectStyles();
         const popup = createPopup();
         createControlPanel();
@@ -133,7 +133,6 @@
         }
     }
 
-    // NEW: Centralized settings loader
     function loadSettings() {
         try {
             const savedState = localStorage.getItem('usurpia-masterState');
@@ -142,17 +141,23 @@
             const savedMaxHighlights = localStorage.getItem('usurpia-maxHighlights');
             config.settings.maxHighlights = savedMaxHighlights ? parseInt(savedMaxHighlights, 10) : 15;
 
-            // Load category states into a temporary object
             config.settings.categories = {};
             for (const categoryKey in config.dictionary) {
                 const savedCategoryState = localStorage.getItem(`usurpia-category-${categoryKey}`);
-                config.settings.categories[categoryKey] = savedCategoryState !== null ? (savedCategoryState === 'true') : true;
+                config.settings.categories[categoryKey] = savedCategoryState !== null ? savedCategoryState === 'true' : true;
+                if (!config.settings.categories[categoryKey]) {
+                    document.body.classList.add(`usurpia-hide-${categoryKey}`);
+                }
             }
         } catch (e) {
             console.warn("Usurpia Lens: localStorage access failed, using default settings.");
+            config.settings.categories = {};
+            for (const categoryKey in config.dictionary) {
+                config.settings.categories[categoryKey] = true;
+            }
         }
     }
-    
+
     function runAnalysis() {
         cleanupHighlights();
         highlightKeywords(config.settings.maxHighlights);
@@ -173,19 +178,22 @@
 
     function cleanup() {
         if (mutationObserver) mutationObserver.disconnect();
+        if (debounceTimeout) clearTimeout(debounceTimeout);
         eventListeners.forEach(({ element, event, handler, options }) => {
             element.removeEventListener(event, handler, options);
         });
         eventListeners = [];
         mutationObserver = null;
+        debounceTimeout = null;
+        activePopupTarget = null;
 
         document.getElementById('usurpia-panel')?.remove();
         document.getElementById('usurpia-popup')?.remove();
         document.getElementById('usurpia-styles')?.remove();
-        cleanupHighlights(); // Ensure no highlights are left
+        cleanupHighlights();
         document.body.classList.remove('usurpia-active');
         for (const key in config.dictionary) {
-             document.body.classList.remove(`usurpia-hide-${key}`);
+            document.body.classList.remove(`usurpia-hide-${key}`);
         }
     }
 
@@ -200,13 +208,16 @@
         for (const categoryKey in config.dictionary) {
             categoryStyles += `
                 body.usurpia-hide-${categoryKey} .usurpia-highlight[data-category="${categoryKey}"] {
-                    display: none; /* FIX: Changed from transparent to none for better performance */
+                    background-color: transparent !important;
+                    color: inherit !important;
+                    cursor: default !important;
+                    padding: 0 !important;
                 }
             `;
         }
-        
+
         style.innerHTML = `
-            .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: pointer; padding: 1px 2px; border-radius: 3px; }
+            .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help !important; padding: 1px 2px; border-radius: 3px; }
             body:not(.usurpia-active) .usurpia-highlight,
             body:not(.usurpia-active) #usurpia-scrollbar,
             body:not(.usurpia-active) #usurpia-panel {
@@ -238,18 +249,17 @@
 
         let categoryCheckboxesHTML = '';
         for (const categoryKey in config.dictionary) {
-            const isChecked = config.settings.categories[categoryKey];
+            const isChecked = config.settings.categories[categoryKey] !== false;
             categoryCheckboxesHTML += `
                 <label>
                     <input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" ${isChecked ? 'checked' : ''}>
                     <span>${config.dictionary[categoryKey].name}</span>
                 </label>
             `;
-            if (!isChecked) document.body.classList.add(`usurpia-hide-${categoryKey}`);
         }
 
         panel.innerHTML = `
-            <div id="usurpia-panel-header">Usurpia Lens v2.5.3</div>
+            <div id="usurpia-panel-header">Usurpia Lens v2.5.4</div>
             <label>
                 <input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}>
                 <strong>Lens Enabled</strong>
@@ -267,7 +277,7 @@
             </div>
         `;
         document.body.appendChild(panel);
-        
+
         const masterToggle = document.getElementById('usurpia-master-toggle');
         const densitySlider = document.getElementById('usurpia-density-slider');
         const densityValue = document.getElementById('usurpia-density-value');
@@ -284,8 +294,11 @@
                 cleanupHighlights();
             }
         });
-        
-        addTrackedListener(densitySlider, 'input', () => densityValue.textContent = densitySlider.value);
+
+        addTrackedListener(densitySlider, 'input', () => {
+            densityValue.textContent = densitySlider.value;
+        });
+
         addTrackedListener(densitySlider, 'change', () => {
             config.settings.maxHighlights = parseInt(densitySlider.value, 10);
             try { localStorage.setItem('usurpia-maxHighlights', config.settings.maxHighlights); } catch (e) {}
@@ -295,11 +308,13 @@
         categoryFilters.forEach(checkbox => {
             addTrackedListener(checkbox, 'change', () => {
                 const category = checkbox.value;
+                config.settings.categories[category] = checkbox.checked;
                 document.body.classList.toggle(`usurpia-hide-${category}`, !checkbox.checked);
                 try { localStorage.setItem(`usurpia-category-${category}`, checkbox.checked); } catch (e) {}
+                if (masterToggle.checked) runAnalysis();
             });
         });
-        
+
         makeDraggable(panel);
     }
 
@@ -310,28 +325,34 @@
         const dragStart = (e) => {
             e.preventDefault();
             const event = e.type === 'touchstart' ? e.touches[0] : e;
-            pos3 = event.clientX; pos4 = event.clientY;
-            addTrackedListener(document, 'mouseup', closeDragElement);
-            addTrackedListener(document, 'touchend', closeDragElement);
+            pos3 = event.clientX;
+            pos4 = event.clientY;
+            addTrackedListener(document, 'mouseup', closeDragElement, { once: true });
+            addTrackedListener(document, 'touchend', closeDragElement, { once: true });
             addTrackedListener(document, 'mousemove', elementDrag);
             addTrackedListener(document, 'touchmove', elementDrag, { passive: false });
         };
+
         const elementDrag = (e) => {
-            if (e.type === 'touchmove') e.preventDefault();
+            e.preventDefault();
             const event = e.type === 'touchmove' ? e.touches[0] : e;
-            pos1 = pos3 - event.clientX; pos2 = pos4 - event.clientY;
-            pos3 = event.clientX; pos4 = event.clientY;
+            pos1 = pos3 - event.clientX;
+            pos2 = pos4 - event.clientY;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
             element.style.top = (element.offsetTop - pos2) + "px";
             element.style.left = (element.offsetLeft - pos1) + "px";
         };
+
         const closeDragElement = () => {
-            // This is tricky. We only remove the listeners we just added for dragging.
-            // A more advanced implementation would tag these listeners to be removed.
-            // For now, this is a known limitation of this simple tracking system.
-            // But since the main cleanup() works, this is acceptable for a bookmarklet.
-            document.onmouseup = null; document.ontouchend = null;
-            document.onmousemove = null; document.ontouchmove = null;
+            // Listeners are automatically removed due to { once: true } for mouseup/touchend
+            // Remove mousemove/touchmove listeners explicitly
+            eventListeners = eventListeners.filter(listener => 
+                !(listener.element === document && 
+                  (listener.event === 'mousemove' || listener.event === 'touchmove'))
+            );
         };
+
         addTrackedListener(header, 'mousedown', dragStart);
         addTrackedListener(header, 'touchstart', dragStart, { passive: false });
     }
@@ -344,9 +365,14 @@
     }
 
     function highlightKeywords(maxHighlights) {
-        // ... (This function remains unchanged from v2.5.1)
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-            acceptNode: node => (node.parentElement.tagName.match(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|A)$/i) || node.parentElement.closest('.usurpia-highlight, #usurpia-popup, #usurpia-panel')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            acceptNode: node => {
+                if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                return (node.parentElement.tagName.match(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|A)$/i) || 
+                        node.parentElement.closest('.usurpia-highlight, #usurpia-popup, #usurpia-panel')) 
+                        ? NodeFilter.FILTER_REJECT 
+                        : NodeFilter.FILTER_ACCEPT;
+            }
         });
 
         let candidates = [];
@@ -357,10 +383,11 @@
         if (allTermStrings.length === 0) return;
         const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
 
-        textNodes.forEach(node => {
-            node.nodeValue.replace(masterRegex, (match, offset) => {
-                candidates.push({ node, match, offset });
-            });
+        textNodes.forEach((node, nodeIndex) => {
+            let match;
+            while ((match = masterRegex.exec(node.nodeValue)) !== null) {
+                candidates.push({ node, match: match[1], offset: match.index, nodeIndex });
+            }
         });
 
         let highlightsToPerform = candidates;
@@ -372,19 +399,21 @@
             highlightsToPerform = candidates.slice(0, maxHighlights);
         }
 
-        const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset }) => {
-            const key = node.textContent;
+        const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset, nodeIndex }) => {
+            const key = `${nodeIndex}_${node.nodeValue}`; // Unique key using node index
             if (!acc.has(key)) acc.set(key, { node, matches: [] });
             acc.get(key).matches.push({ match, offset });
             return acc;
         }, new Map());
 
         groupedByNode.forEach(({ node, matches }) => {
-            matches.sort((a, b) => b.offset - a.offset);
+            matches.sort((a, b) => b.offset - a.offset); // Sort descending to avoid offset issues
             matches.forEach(({ match, offset }) => {
                 const category = termToCategoryMap[match.toLowerCase()];
-                const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t)));
-                if (entry) {
+                const entry = flatDictionary.find(d => 
+                    (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t))
+                );
+                if (entry && node.parentNode) {
                     const span = document.createElement('span');
                     span.className = 'usurpia-highlight';
                     span.setAttribute('data-term', entry.primaryTerm);
@@ -434,41 +463,32 @@
 
     function setupPopupEventListeners(popup) {
         let hideTimer;
-        
-        // Show popup on hover (for desktop)
-        addTrackedListener(document.body, 'mouseover', e => {
+
+        addTrackedListener(document.body, 'pointerenter', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
                 clearTimeout(hideTimer);
-                showPopup(popup, e.target);
-                positionPopup(e, popup);
-            }
-        });
-
-        // Toggle popup on click/tap (for touch and desktop)
-        addTrackedListener(document.body, 'click', e => {
-            if (e.target.classList.contains('usurpia-highlight')) {
-                if (activePopupTarget === e.target && popup.style.display === 'block') {
-                    popup.style.display = 'none';
-                    activePopupTarget = null;
-                } else {
+                if (activePopupTarget !== e.target) {
                     showPopup(popup, e.target);
                     positionPopup(e, popup);
                     activePopupTarget = e.target;
                 }
-            } else if (!popup.contains(e.target)) {
-                popup.style.display = 'none';
-                activePopupTarget = null;
             }
         });
 
-        addTrackedListener(document.body, 'mouseout', e => {
+        addTrackedListener(document.body, 'pointerleave', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
-                hideTimer = setTimeout(() => { popup.style.display = 'none'; }, 200);
+                hideTimer = setTimeout(() => {
+                    popup.style.display = 'none';
+                    activePopupTarget = null;
+                }, 200);
             }
         });
 
-        addTrackedListener(popup, 'mouseenter', () => clearTimeout(hideTimer));
-        addTrackedListener(popup, 'mouseleave', () => popup.style.display = 'none');
+        addTrackedListener(popup, 'pointerenter', () => clearTimeout(hideTimer));
+        addTrackedListener(popup, 'pointerleave', () => {
+            popup.style.display = 'none';
+            activePopupTarget = null;
+        });
     }
 
     function showPopup(popup, target) {
@@ -485,15 +505,17 @@
     }
 
     function positionPopup(event, popup) {
-        let x = event.clientX + 15;
-        let y = event.clientY + 15;
+        const isTouch = event.pointerType === 'touch';
+        let x = event.clientX + (isTouch ? 0 : 15);
+        let y = event.clientY + (isTouch ? 20 : 15);
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         const popupWidth = popup.offsetWidth;
         const popupHeight = popup.offsetHeight;
-        if (x + popupWidth > screenWidth) x = event.clientX - popupWidth - 15;
-        if (y + popupHeight > screenHeight) y = event.clientY - popupHeight - 15;
-        if (x < 0) x = 5; if (y < 0) y = 5;
+        if (x + popupWidth > screenWidth) x = event.clientX - popupWidth - (isTouch ? 0 : 15);
+        if (y + popupHeight > screenHeight) y = event.clientY - popupHeight - (isTouch ? 20 : 15);
+        if (x < 0) x = 5;
+        if (y < 0) y = 5;
         popup.style.left = `${x}px`;
         popup.style.top = `${y}px`;
     }
@@ -504,22 +526,19 @@
             return;
         }
 
-        let timeout;
         const debounceAnalysis = (mutations) => {
-            // A simple check to avoid re-running on our own DOM changes
             if (mutations.some(m => m.target.id?.startsWith('usurpia-'))) return;
-            
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
                 if (document.body.classList.contains('usurpia-active')) {
                     console.log("Usurpia Lens: Dynamic content detected, re-running analysis.");
                     runAnalysis();
                 }
-            }, 750); // Increased debounce for stability
+            }, 500);
         };
 
         mutationObserver = new MutationObserver(debounceAnalysis);
-        mutationObserver.observe(document.body, { childList: true, subtree: true, attributes: false });
+        mutationObserver.observe(document.body, { childList: true, subtree: true });
     }
 
     main();
