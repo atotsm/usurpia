@@ -1,10 +1,8 @@
-// Usurpia Lens Bookmarklet - V2.5.1 (The "UI-Fixed" Analyzer)
-// Corrects the layout of the control panel, especially the density slider, for a cleaner UI.
+// Usurpia Lens Bookmarklet - V2.5.2 (Enhanced for Dynamic Content, Touch, Persistence, and Cleanup)
+// Implements dynamic content handling, touch support, persistent settings, and event listener cleanup.
 
 (function() {
-
     // --- CONFIGURATION & DICTIONARY ---
-    // The dictionary remains the same as v2.5.
     const config = {
         settings: {
             maxHighlights: 15,
@@ -105,17 +103,30 @@
     }
 
     // --- CORE LOGIC ---
+    let eventListeners = [];
+    let mutationObserver = null;
 
     function main() {
         if (document.getElementById('usurpia-panel')) {
-            console.log("Usurpia Lens is already active.");
-            return;
+            console.log("Usurpia Lens is already active. Cleaning up and reinitializing.");
+            cleanup();
         }
-        console.log("Usurpia Lens v2.5.1 Activated.");
+        console.log("Usurpia Lens v2.5.2 Activated.");
         injectStyles();
         const popup = createPopup();
         createControlPanel();
         setupPopupEventListeners(popup);
+        setupMutationObserver();
+
+        // Load settings from localStorage
+        try {
+            const savedMaxHighlights = localStorage.getItem('usurpia-maxHighlights');
+            if (savedMaxHighlights) {
+                config.settings.maxHighlights = parseInt(savedMaxHighlights, 10);
+            }
+        } catch (e) {
+            console.warn("Usurpia Lens: localStorage access failed, using default settings.");
+        }
 
         if (config.settings.initialState === 'on') {
             document.body.classList.add('usurpia-active');
@@ -138,6 +149,27 @@
         });
         const scrollbar = document.getElementById('usurpia-scrollbar');
         if (scrollbar) scrollbar.remove();
+    }
+
+    function cleanup() {
+        // Remove event listeners
+        eventListeners.forEach(({ element, event, handler }) => {
+            element.removeEventListener(event, handler);
+        });
+        eventListeners = [];
+
+        // Disconnect MutationObserver
+        if (mutationObserver) {
+            mutationObserver.disconnect();
+            mutationObserver = null;
+        }
+
+        // Remove DOM elements
+        document.getElementById('usurpia-panel')?.remove();
+        document.getElementById('usurpia-popup')?.remove();
+        document.getElementById('usurpia-scrollbar')?.remove();
+        document.getElementById('usurpia-styles')?.remove();
+        document.body.classList.remove('usurpia-active');
     }
 
     function injectStyles() {
@@ -201,16 +233,26 @@
 
         let categoryCheckboxesHTML = '';
         for (const categoryKey in config.dictionary) {
+            let isChecked = true;
+            try {
+                const savedState = localStorage.getItem(`usurpia-category-${categoryKey}`);
+                isChecked = savedState !== null ? savedState === 'true' : true;
+            } catch (e) {
+                console.warn(`Usurpia Lens: Failed to load category state for ${categoryKey} from localStorage.`);
+            }
             categoryCheckboxesHTML += `
                 <label>
-                    <input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" checked>
+                    <input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" ${isChecked ? 'checked' : ''}>
                     <span>${config.dictionary[categoryKey].name}</span>
                 </label>
             `;
+            if (!isChecked) {
+                document.body.classList.add(`usurpia-hide-${categoryKey}`);
+            }
         }
 
         panel.innerHTML = `
-            <div id="usurpia-panel-header">Usurpia Lens v2.5</div>
+            <div id="usurpia-panel-header">Usurpia Lens v2.5.2</div>
             <label>
                 <input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}>
                 <strong>Lens Enabled</strong>
@@ -235,7 +277,7 @@
         const densityValue = document.getElementById('usurpia-density-value');
         const categoryFilters = document.querySelectorAll('.usurpia-category-filter');
 
-        masterToggle.addEventListener('change', () => {
+        const masterToggleHandler = () => {
             if (masterToggle.checked) {
                 document.body.classList.add('usurpia-active');
                 runAnalysis();
@@ -243,27 +285,46 @@
                 document.body.classList.remove('usurpia-active');
                 cleanupHighlights();
             }
-        });
+        };
+        masterToggle.addEventListener('change', masterToggleHandler);
+        eventListeners.push({ element: masterToggle, event: 'change', handler: masterToggleHandler });
 
-        densitySlider.addEventListener('input', () => {
+        const densityInputHandler = () => {
             densityValue.textContent = densitySlider.value;
-        });
-        densitySlider.addEventListener('change', () => {
+        };
+        densitySlider.addEventListener('input', densityInputHandler);
+        eventListeners.push({ element: densitySlider, event: 'input', handler: densityInputHandler });
+
+        const densityChangeHandler = () => {
             config.settings.maxHighlights = parseInt(densitySlider.value, 10);
+            try {
+                localStorage.setItem('usurpia-maxHighlights', config.settings.maxHighlights);
+            } catch (e) {
+                console.warn("Usurpia Lens: Failed to save maxHighlights to localStorage.");
+            }
             if (masterToggle.checked) {
                 runAnalysis();
             }
-        });
+        };
+        densitySlider.addEventListener('change', densityChangeHandler);
+        eventListeners.push({ element: densitySlider, event: 'change', handler: densityChangeHandler });
 
         categoryFilters.forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
+            const categoryHandler = () => {
                 const category = checkbox.value;
                 if (checkbox.checked) {
                     document.body.classList.remove(`usurpia-hide-${category}`);
                 } else {
                     document.body.classList.add(`usurpia-hide-${category}`);
                 }
-            });
+                try {
+                    localStorage.setItem(`usurpia-category-${category}`, checkbox.checked);
+                } catch (e) {
+                    console.warn(`Usurpia Lens: Failed to save category state for ${category} to localStorage.`);
+                }
+            };
+            checkbox.addEventListener('change', categoryHandler);
+            eventListeners.push({ element: checkbox, event: 'change', handler: categoryHandler });
         });
         
         makeDraggable(panel);
@@ -272,32 +333,44 @@
     function makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         const header = document.getElementById('usurpia-panel-header');
-        header.onmousedown = dragMouseDown;
 
-        function dragMouseDown(e) {
+        const dragStart = (e) => {
             e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+            const event = e.type === 'touchstart' ? e.touches[0] : e;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
             document.onmouseup = closeDragElement;
+            document.ontouchend = closeDragElement;
             document.onmousemove = elementDrag;
-        }
+            document.ontouchmove = elementDrag;
+        };
 
-        function elementDrag(e) {
+        const elementDrag = (e) => {
             e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+            const event = e.type === 'touchmove' ? e.touches[0] : e;
+            pos1 = pos3 - event.clientX;
+            pos2 = pos4 - event.clientY;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
             element.style.top = (element.offsetTop - pos2) + "px";
             element.style.left = (element.offsetLeft - pos1) + "px";
-        }
+        };
 
-        function closeDragElement() {
+        const closeDragElement = () => {
             document.onmouseup = null;
+            document.ontouchend = null;
             document.onmousemove = null;
-        }
+            document.ontouchmove = null;
+        };
+
+        header.onmousedown = dragStart;
+        header.ontouchstart = dragStart;
+        eventListeners.push(
+            { element: header, event: 'mousedown', handler: dragStart },
+            { element: header, event: 'touchstart', handler: dragStart }
+        );
     }
-    
+
     function createPopup() {
         let popup = document.createElement('div');
         popup.id = 'usurpia-popup';
@@ -386,16 +459,18 @@
             mark.className = 'usurpia-scrollbar-mark';
             mark.style.top = `${relativePosition}%`;
             mark.title = `Jump to "${highlight.textContent}"`;
-            mark.addEventListener('click', () => {
+            const clickHandler = () => {
                 highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            });
+            };
+            mark.addEventListener('click', clickHandler);
+            eventListeners.push({ element: mark, event: 'click', handler: clickHandler });
             scrollbar.appendChild(mark);
         });
     }
 
     function setupPopupEventListeners(popup) {
         let hideTimer;
-        document.body.addEventListener('mouseover', e => {
+        const mouseOverHandler = e => {
             if (e.target.classList.contains('usurpia-highlight')) {
                 clearTimeout(hideTimer);
                 const primaryTerm = e.target.getAttribute('data-term');
@@ -410,14 +485,477 @@
                     positionPopup(e, popup);
                 }
             }
+        };
+        document.body.addEventListener('mouseover', mouseOverHandler);
+        eventListeners.push({ element: document.body, event: 'mouseover', handler: mouseOverHandler });
+
+ cruciale de l'économie mondiale. Ils imposent l'austérité et la privatisation des actifs publics aux nations débitrices, garantissant ainsi le transfert des ressources du Sud global vers la classe des créanciers." } },
+                    { terms: ["Wall Street"], primaryTerm: "Wall Street", explanations: { headline: "Le Centre de Commandement du Système", summary: "Le cœur symbolique et opérationnel de la financiarisation, où l'économie réelle est abstraite en instruments spéculatifs et où la richesse extraite par le système est concentrée et gérée." } },
+                    { terms: ["politicien", "législateur", "gouvernement"], primaryTerm: "politicien", explanations: { headline: "Le Gestionnaire du Système", summary: "Un acteur du théâtre politique, principalement chargé de gérer le mécontentement public et de faire adopter des lois qui servent les intérêts des principaux bénéficiaires du système (leurs donateurs)." } },
+                    { term: "lobbying", explanations: { headline: "Corruption Systémique", summary: "Le mécanisme par lequel la richesse concentrée, générée par le moteur de la dette, capture le processus politique. Il garantit que les lois protègent et renforcent le système, créant une boucle de rétroaction de pouvoir." } },
+                    { term: "dérégulation", explanations: { headline: "Libérer le Moteur", summary: "Le processus de suppression des garde-fous légaux et éthiques, permettant au moteur financier de fonctionner avec plus de vitesse et de brutalité, accélérant l'extraction et l'instabilité." } },
+                    { term: "austérité", explanations: { headline: "Punition pour les Masses", summary: "La politique de réduction des services publics et des filets de sécurité sociaux pour garantir que les revenus gouvernementaux soient priorisés pour rembourser les dettes dues à la classe des créanciers riches. Elle renforce la hiérarchie du système." } },
+                    { term: "technocratie", explanations: { headline: "Le Règne des 'Experts'", summary: "L'idéologie selon laquelle le système est trop complexe pour un contrôle démocratique et doit être géré par une élite non élue et diplômée. Cela prive le public de pouvoir et protège les principes fondamentaux du système du débat." } },
+                    { term: "PIB", explanations: { headline: "Produit de Destruction Brute", summary: "La principale mesure de 'progrès' du système. Un chiffre erroné où la pollution, l'abattage d'une forêt et la construction de prisons sont tous comptés comme des positifs économiques, révélant parfaitement les valeurs perverses du système." } }
+                ]
+            },
+            societal: {
+                name: "Sociétal & Culturel",
+                words: [
+                    { term: "l'économie", explanations: { headline: "L'Abstraction que Nous Servons", summary: "Un concept abstrait représentant le flux de la monnaie-dette, que l'on nous dit de servir. Cela inverse la réalité : une économie saine devrait servir le bien-être humain, et non exiger son sacrifice." } },
+                    { term: "le marché", explanations: { headline: "Le Mythe du Marché Libre", summary: "Un système présenté comme libre et équitable, mais fondamentalement truqué par le contrôle centralisé de la création monétaire, donnant un avantage insurmontable aux créateurs de dettes." } },
+                    { term: "méritocratie", explanations: { headline: "Le Noble Mensonge", summary: "Le mythe central utilisé pour justifier l'inégalité. Il prétend que le succès repose uniquement sur le talent et l'effort individuels, ignorant les positions de départ truquées du système et l'attraction gravitationnelle de la dette." } },
+                    { term: "succès", explanations: { headline: "Victoire dans la Course de Rats", summary: "La définition du système d'une vie bien vécue : l'accumulation de richesse et de statut. Cela canalise notre énergie vitale dans la compétition au sein du 'Piège de la Compétition' au lieu de poursuivre des valeurs humaines intrinsèques." } },
+                    { terms: ["emplois", "création d'emplois"], primaryTerm: "emplois", explanations: { headline: "Un Moyen de Servitude par la Dette", summary: "Pour la majorité, non une source de sens, mais l'acte nécessaire de vendre son temps pour rembourser les dettes nécessaires pour vivre dans le système." } },
+                    { term: "carrière", explanations: { headline: "La Course de Rats", summary: "Un engagement à vie dans le 'Piège de la Compétition', souvent en échange de statut et des moyens de contracter et de rembourser des dettes toujours plus importantes (hypothèque, etc.)." } },
+                    { term: "retraite", explanations: { headline: "Un Pari sur le Casino", summary: "La nécessité moderne de jouer ses économies sur les marchés financiers spéculatifs, car l'inflation inhérente au système rend l'épargne traditionnelle impossible." } },
+                    { term: "consommateur", explanations: { headline: "Le Citoyen, Commodifié", summary: "La redéfinition d'un être humain d'un citoyen actif en un réceptacle passif pour la consommation, dont le principal devoir civique est de contracter des dettes pour alimenter la 'croissance économique'." } },
+                    { terms: ["ressources humaines", "capital humain"], primaryTerm: "ressources humaines", explanations: { headline: "La Déshumanisation du Travail", summary: "La redéfinition des êtres humains en actifs fongibles ou en matières premières dans un bilan d'entreprise, une partie clé de l'inversion du 'Paradigme Humaniste'." } },
+                    { term: "productivité", explanations: { headline: "Le Mandat d'Efficacité", summary: "Une métrique souvent utilisée pour justifier la stagnation des salaires et les licenciements. Les gains financiers d'une 'productivité accrue' sont systématiquement canalisés vers les détenteurs de capital, et non vers le travail." } },
+                    { term: "éducation", explanations: { headline: "Le Moteur de Conformité", summary: "La fonction principale du système éducatif moderne : produire des travailleurs spécialisés et conformes et des consommateurs endettés, plutôt que des penseurs critiques libérés qui pourraient remettre en question le système." } },
+                    { term: "médias", explanations: { headline: "Fabriquer le Consentement", summary: "Une machine narrative appartenant aux entreprises qui distrait avec du spectacle et divise avec des guerres culturelles pour empêcher le public de remettre en question le système économique fondamental." } },
+                    { term: "actualités", explanations: { headline: "Le Produit de Distraction", summary: "Un produit commercial, appartenant aux bénéficiaires du système, conçu pour capter l'attention et l'énergie émotionnelle. Son but est le contrôle narratif, et non la livraison objective de la vérité." } },
+                    { term: "bouc émissaire", explanations: { headline: "La Cible de Distraction", summary: "Un outil crucial de contrôle social. Lorsque la douleur induite par le système devient trop forte, une cible (une autre race, nation ou groupe politique) est utilisée pour détourner la colère publique des véritables architectes du système." } },
+                    { term: "conspiration", explanations: { headline: "L'Arme de Terminaison de Pensée", summary: "La défense rhétorique du système. Ce mot est utilisé pour ridiculiser et rejeter toute analyse rationnelle de ses règles fondamentales, confondant la critique systémique avec la paranoïa pour mettre fin au débat." } }
+                ]
+            },
+            personal: {
+                name: "Personnel & Relationnel",
+                words: [
+                    { term: "étudiant", explanations: { headline: "L'Apprenant Endetté", summary: "Un individu préparé par le 'Paradigme Éducatif' pour une vie de servitude par la dette, garantissant que son travail futur est pré-occupé par le système avant même qu'il ne gagne son premier dollar." } },
+                    { term: "médecin", explanations: { headline: "Agent de l'Industrie de la Maladie", summary: "Un soignant piégé dans un 'Paradigme de Soins de Santé' qui trouve souvent plus rentable de gérer les symptômes chroniques avec des médicaments coûteux que de cultiver un véritable bien-être ou d'adresser les causes profondes." } },
+                    { term: "parent", explanations: { headline: "Le Gardien Endetté", summary: "Un soignant pris dans le 'Piège de la Compétition', souvent nécessitant deux revenus juste pour répondre aux besoins de base, forcé de naviguer dans le 'Paradigme Alimentaire' industriel et de préparer son enfant à un avenir de dettes." } },
+                    { term: "anxiété", explanations: { headline: "Une Réponse Rationnelle", summary: "L'état psychologique logique résultant de la vie dans un système de précarité constante, de compétition imposée et de surcharge d'informations. C'est un symptôme de l'environnement, pas un échec personnel." } },
+                    { term: "stress", explanations: { headline: "Frottement Systémique", summary: "Le coût physique et mental de tenter de répondre aux exigences impossibles du 'Piège de la Compétition' et à la pression constante de rembourser la dette." } },
+                    { term: "dépression", explanations: { headline: "L'Effondrement Jumelé du Système", summary: "Un terme reflétant à la fois l'état final économique du système (un effondrement de la dette) et son principal produit psychologique : le sentiment généralisé de désespoir et d'aliénation de vivre dans un système extractif et dénué de sens." } },
+                    { term: "addiction", explanations: { headline: "Une Évasion Rentable", summary: "Une réponse rationnelle, et souvent rentable, à la douleur et au manque de sens généré par le système. Elle offre une évasion temporaire tout en créant souvent de nouveaux cycles de dettes et de dépendance." } },
+                    { term: "famille", explanations: { headline: "L'Unité Économique Surchargée", summary: "Une source principale d'amour et de connexion, maintenant constamment sous tension par la nécessité de plusieurs revenus juste pour rembourser la dette, payer le logement et rester à flot dans le 'Piège de la Compétition'." } },
+                    { term: "communauté", explanations: { headline: "Le Commun Érodé", summary: "Le réseau de confiance locale et de soutien mutuel systématiquement dissous par le 'Piège de la Compétition', qui oppose les voisins les uns aux autres et impose une mobilité constante pour le travail." } },
+                    { term: "rencontres", explanations: { headline: "Romance Transactionnelle", summary: "Le processus moderne de recherche d'un partenaire, fortement influencé par la logique de commodification, de signalisation de statut et de valeur transactionnelle du 'Paradigme de l'Amour'." } },
+                    { term: "maison", explanations: { headline: "Un Besoin Humain Financiarisé", summary: "Un besoin fondamental de logement, transformé par la financiarisation en principal véhicule de la dette générationnelle et en actif spéculatif pour les riches." } },
+                    { term: "nourriture", explanations: { headline: "Le Produit Industriel", summary: "Notre source de nourriture, corrompue par le 'Paradigme Alimentaire' en un produit industriel conçu pour la durée de conservation et le profit, et non pour la nutrition, entraînant des maladies chroniques généralisées." } },
+                    { term: "liberté", explanations: { headline: "La Liberté de Choisir Votre Créancier", summary: "La redéfinition de la liberté par le système. Ce n'est pas une liberté hors du système, mais le 'choix' du consommateur entre différentes marques d'emplois, de dettes et de distractions au sein du jeu obligatoire." } },
+                    { term: "espoir", explanations: { headline: "Un Avenir Financé par la Dette", summary: "L'aspiration humaine naturelle à une vie meilleure, canalisée par le système dans l'acte de contracter une dette. L'espoir d'un logement devient une hypothèque ; l'espoir d'une éducation devient un prêt étudiant." } },
+                    { term: "smartphone", explanations: { headline: "La Laisse Moderne", summary: "Un outil puissant de commodité qui sert également de dispositif de surveillance de masse ('Paradigme Technologique'), de distraction constante ('Paradigme Médiatique') et de connexion 24/7 à la machine de travail." } }
+                ]
+            }
+        }
+    };
+
+    // --- DATA PREPARATION ---
+    let flatDictionary = [];
+    let termToCategoryMap = {};
+    for (const categoryKey in config.dictionary) {
+        const category = config.dictionary[categoryKey];
+        category.words.forEach(item => {
+            const primaryTerm = item.primaryTerm || item.term;
+            const terms = item.terms || [item.term];
+            const enrichedItem = {
+                ...item,
+                primaryTerm: primaryTerm,
+                category: categoryKey,
+                link_free: "https://zipcadia.gumroad.com",
+                link_paid: "https://zipcadia.gumroad.com/l/bundle1"
+            };
+            flatDictionary.push(enrichedItem);
+            terms.forEach(t => termToCategoryMap[t.toLowerCase()] = categoryKey);
         });
-        document.body.addEventListener('mouseout', e => {
+    }
+
+    // --- CORE LOGIC ---
+    let eventListeners = [];
+    let mutationObserver = null;
+
+    function main() {
+        if (document.getElementById('usurpia-panel')) {
+            console.log("Usurpia Lens is already active. Cleaning up and reinitializing.");
+            cleanup();
+        }
+        console.log("Usurpia Lens v2.5.2 Activated.");
+        injectStyles();
+        const popup = createPopup();
+        createControlPanel();
+        setupPopupEventListeners(popup);
+        setupMutationObserver();
+
+        // Load settings from localStorage
+        try {
+            const savedMaxHighlights = localStorage.getItem('usurpia-maxHighlights');
+            if (savedMaxHighlights) {
+                config.settings.maxHighlights = parseInt(savedMaxHighlights, 10);
+            }
+        } catch (e) {
+            console.warn("Usurpia Lens: localStorage access failed, using default settings.");
+        }
+
+        if (config.settings.initialState === 'on') {
+            document.body.classList.add('usurpia-active');
+            runAnalysis();
+        }
+    }
+
+    function runAnalysis() {
+        cleanupHighlights();
+        highlightKeywords(config.settings.maxHighlights);
+        createScrollbarMarks();
+    }
+
+    function cleanupHighlights() {
+        const highlights = document.querySelectorAll('.usurpia-highlight');
+        highlights.forEach(span => {
+            const parent = span.parentNode;
+            parent.replaceChild(document.createTextNode(span.textContent), span);
+            parent.normalize();
+        });
+        const scrollbar = document.getElementById('usurpia-scrollbar');
+        if (scrollbar) scrollbar.remove();
+    }
+
+    function cleanup() {
+        // Remove event listeners
+        eventListeners.forEach(({ element, event, handler }) => {
+            element.removeEventListener(event, handler);
+        });
+        eventListeners = [];
+
+        // Disconnect MutationObserver
+        if (mutationObserver) {
+            mutationObserver.disconnect();
+            mutationObserver = null;
+        }
+
+        // Remove DOM elements
+        document.getElementById('usurpia-panel')?.remove();
+        document.getElementById('usurpia-popup')?.remove();
+        document.getElementById('usurpia-scrollbar')?.remove();
+        document.getElementById('usurpia-styles')?.remove();
+        document.body.classList.remove('usurpia-active');
+    }
+
+    function injectStyles() {
+        let style = document.getElementById('usurpia-styles');
+        if (style) style.remove();
+        
+        style = document.createElement('style');
+        style.id = 'usurpia-styles';
+
+        let categoryStyles = '';
+        for (const categoryKey in config.dictionary) {
+            categoryStyles += `
+                body.usurpia-hide-${categoryKey} .usurpia-highlight[data-category="${categoryKey}"] {
+                    background-color: transparent !important;
+                    color: inherit !important;
+                    cursor: default;
+                    padding: 0;
+                }
+            `;
+        }
+        
+        style.innerHTML = `
+            /* Core Highlight Styles */
+            .usurpia-highlight { background-color: #FFFFව
+
+            /* Popup Styles */
+            #usurpia-popup { position: fixed; display: none; width: 280px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 999999999; text-align: left; }
+            #usurpia-popup p { margin:  Ascendant-descendant: none; }
+            #usurpia-popup a { color: #007bff !important; text-decoration: underline !important; display: block; margin-top: 5px; }
+            #usurpia-popup .usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+
+            /* Scrollbar Styles */
+            #usurpia-scrollbar { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 999999998; }
+            .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF0000; opacity: 0.7; }
+            .usurpia-scrollbar-mark:hover { opacity: 1; cursor: pointer; }
+
+            /* Control Panel Styles */
+            #usurpia-panel { position: fixed; bottom: 20px; left: 20px; background: #f4f4f4; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 15px; font-family: sans-serif; font-size: 12px; color: #333; width: 200px; }
+            #usurpia-panel-header { padding: 5px; background: #ddd; cursor: move; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; margin: -15px -15px 10px -15px; }
+            #usurpia-panel label { display: flex; align-items: center; margin-bottom: 8px; user-select: none; }
+            #usurpia-panel input[type="range"] { width: 100%; margin-top: 4px; }
+            #usurpia-panel input[type="checkbox"] { margin-right: 8px; }
+            #usurpia-panel .usurpia-control-group { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+            #usurpia-panel .usurpia-density-label { display: flex; justify-content: space-between; align-items: center; }
+            #usurpia-panel #usurpia-density-value { font-weight: bold; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function createControlPanel() {
+        const panel = document.createElement('div');
+        panel.id = 'usurpia-panel';
+
+        let categoryCheckboxesHTML = '';
+        for (const categoryKey in config.dictionary) {
+            let isChecked = true;
+            try {
+                const savedState = localStorage.getItem(`usurpia-category-${categoryKey}`);
+                isChecked = savedState !== null ? savedState === 'true' : true;
+            } catch (e) {
+                console.warn(`Usurpia Lens: Failed to load category state for ${categoryKey} from localStorage.`);
+            }
+            categoryCheckboxesHTML += `
+                <label>
+                    <input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" ${isChecked ? 'checked' : ''}>
+                    <span>${config.dictionary[categoryKey].name}</span>
+                </label>
+            `;
+            if (!isChecked) {
+                document.body.classList.add(`usurpia-hide-${categoryKey}`);
+            }
+        }
+
+        panel.innerHTML = `
+            <div id="usurpia-panel-header">Usurpia Lens v2.5.2</div>
+            <label>
+                <input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}>
+                <strong>Lens Enabled</strong>
+            </label>
+            <div class="usurpia-control-group">
+                <div class="usurpia-density-label">
+                    <span>Highlight Density:</span>
+                    <span id="usurpia-density-value">${config.settings.maxHighlights}</span>
+                </div>
+                <input type="range" id="usurpia-density-slider" min="1" max="50" value="${config.settings.maxHighlights}">
+            </div>
+            <div class="usurpia-control-group">
+                <strong>Filter Categories:</strong>
+                <div style="margin-top: 5px;">${categoryCheckboxesHTML}</div>
+            </div>
+        `;
+        document.body.appendChild(panel);
+        
+        // --- Event Listeners for Panel ---
+        const masterToggle = document.getElementById('usurpia-master-toggle');
+        const densitySlider = document.getElementById('usurpia-density-slider');
+        const densityValue = document.getElementById('usurpia-density-value');
+        const categoryFilters = document.querySelectorAll('.usurpia-category-filter');
+
+        const masterToggleHandler = () => {
+            if (masterToggle.checked) {
+                document.body.classList.add('usurpia-active');
+                runAnalysis();
+            } else {
+                document.body.classList.remove('usurpia-active');
+                cleanupHighlights();
+            }
+        };
+        masterToggle.addEventListener('change', masterToggleHandler);
+        eventListeners.push({ element: masterToggle, event: 'change', handler: masterToggleHandler });
+
+        const densityInputHandler = () => {
+            densityValue.textContent = densitySlider.value;
+        };
+        densitySlider.addEventListener('input', densityInputHandler);
+        eventListeners.push({ element: densitySlider, event: 'input', handler: densityInputHandler });
+
+        const densityChangeHandler = () => {
+            config.settings.maxHighlights = parseInt(densitySlider.value, 10);
+            try {
+                localStorage.setItem('usurpia-maxHighlights', config.settings.maxHighlights);
+            } catch (e) {
+                console.warn("Usurpia Lens: Failed to save maxHighlights to localStorage.");
+            }
+            if (masterToggle.checked) {
+                runAnalysis();
+            }
+        };
+        densitySlider.addEventListener('change', densityChangeHandler);
+        eventListeners.push({ element: densitySlider, event: 'change', handler: densityChangeHandler });
+
+        categoryFilters.forEach(checkbox => {
+            const categoryHandler = () => {
+                const category = checkbox.value;
+                if (checkbox.checked) {
+                    document.body.classList.remove(`usurpia-hide-${category}`);
+                } else {
+                    document.body.classList.add(`usurpia-hide-${category}`);
+                }
+                try {
+                    localStorage.setItem(`usurpia-category-${category}`, checkbox.checked);
+                } catch (e) {
+                    console.warn(`Usurpia Lens: Failed to save category state for ${category} to localStorage.`);
+                }
+            };
+            checkbox.addEventListener('change', categoryHandler);
+            eventListeners.push({ element: checkbox, event: 'change', handler: categoryHandler });
+        });
+        
+        makeDraggable(panel);
+    }
+
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = document.getElementById('usurpia-panel-header');
+
+        const dragStart = (e) => {
+            e.preventDefault();
+            const event = e.type === 'touchstart' ? e.touches[0] : e;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
+            document.onmouseup = closeDragElement;
+            document.ontouchend = closeDragElement;
+            document.onmousemove = elementDrag;
+            document.ontouchmove = elementDrag;
+        };
+
+        const elementDrag = (e) => {
+            e.preventDefault();
+            const event = e.type === 'touchmove' ? e.touches[0] : e;
+            pos1 = pos3 - event.clientX;
+            pos2 = pos4 - event.clientY;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        };
+
+        const closeDragElement = () => {
+            document.onmouseup = null;
+            document.ontouchend = null;
+            document.onmousemove = null;
+            document.ontouchmove = null;
+        };
+
+        header.onmousedown = dragStart;
+        header.ontouchstart = dragStart;
+        eventListeners.push(
+            { element: header, event: 'mousedown', handler: dragStart },
+            { element: header, event: 'touchstart', handler: dragStart }
+        );
+    }
+
+    function createPopup() {
+        let popup = document.createElement('div');
+        popup.id = 'usurpia-popup';
+        document.body.appendChild(popup);
+        return popup;
+    }
+
+    function highlightKeywords(maxHighlights) {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode: node => (node.parentElement.tagName.match(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|A)$/i) || node.parentElement.closest('.usurpia-highlight, #usurpia-popup, #usurpia-panel')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        });
+
+        let candidates = [];
+        let textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+        const allTermStrings = Object.keys(termToCategoryMap);
+        if (allTermStrings.length === 0) return;
+        const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
+
+        textNodes.forEach(node => {
+            node.nodeValue.replace(masterRegex, (match, offset) => {
+                candidates.push({ node, match, offset });
+            });
+        });
+
+        let highlightsToPerform = candidates;
+        if (candidates.length > maxHighlights) {
+            for (let i = candidates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+            }
+            highlightsToPerform = candidates.slice(0, maxHighlights);
+        }
+
+        const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset }) => {
+            const key = node.textContent;
+            if (!acc.has(key)) acc.set(key, { node, matches: [] });
+            acc.get(key).matches.push({ match, offset });
+            return acc;
+        }, new Map());
+
+        groupedByNode.forEach(({ node, matches }) => {
+            matches.sort((a, b) => b.offset - a.offset);
+            matches.forEach(({ match, offset }) => {
+                const category = termToCategoryMap[match.toLowerCase()];
+                const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t)));
+                if (entry) {
+                    const span = document.createElement('span');
+                    span.className = 'usurpia-highlight';
+                    span.setAttribute('data-term', entry.primaryTerm);
+                    span.setAttribute('data-category', category);
+                    span.textContent = match;
+
+                    const range = document.createRange();
+                    range.setStart(node, offset);
+                    range.setEnd(node, offset + match.length);
+                    range.deleteContents();
+                    range.insertNode(span);
+                }
+            });
+        });
+    }
+
+    function createScrollbarMarks() {
+        const scrollbar = document.createElement('div');
+        scrollbar.id = 'usurpia-scrollbar';
+        document.body.appendChild(scrollbar);
+
+        const highlights = document.querySelectorAll('.usurpia-highlight');
+        if (highlights.length === 0) return;
+
+        const docHeight = Math.max(
+            document.body.scrollHeight, document.documentElement.scrollHeight,
+            document.body.offsetHeight, document.documentElement.offsetHeight,
+            document.body.clientHeight, document.documentElement.clientHeight
+        );
+
+        highlights.forEach(highlight => {
+            const rect = highlight.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const absoluteTop = rect.top + scrollTop;
+            const relativePosition = (absoluteTop / docHeight) * 100;
+
+            const mark = document.createElement('div');
+            mark.className = 'usurpia-scrollbar-mark';
+            mark.style.top = `${relativePosition}%`;
+            mark.title = `Jump to "${highlight.textContent}"`;
+            const clickHandler = () => {
+                highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+            mark.addEventListener('click', clickHandler);
+            eventListeners.push({ element: mark, event: 'click', handler: clickHandler });
+            scrollbar.appendChild(mark);
+        });
+    }
+
+    function setupPopupEventListeners(popup) {
+        let hideTimer;
+        const mouseOverHandler = e => {
+            if (e.target.classList.contains('usurpia-highlight')) {
+                clearTimeout(hideTimer);
+                const primaryTerm = e.target.getAttribute('data-term');
+                const wordData = flatDictionary.find(w => w.primaryTerm === primaryTerm);
+                if (wordData) {
+                    popup.innerHTML = `
+                        <p><strong>${wordData.explanations.headline}:</strong> ${wordData.explanations.summary}</p>
+                        <a href="${wordData.link_free}" target="_blank">Get The Full Lens (Free Option)</a>
+                        <a href="${wordData.link_paid}" target="_blank" class="usurpia-link-paid">Get The Ambassador's Toolkit</a>
+                    `;
+                    popup.style.display = 'block';
+                    positionPopup(e, popup);
+                }
+            }
+        };
+        document.body.addEventListener('mouseover', mouseOverHandler);
+        eventListeners.push({ element: document.body, event: 'mouseover', handler: mouseOverHandler });
+
+        const mouseOutHandler = e => {
             if (e.target.classList.contains('usurpia-highlight')) {
                 hideTimer = setTimeout(() => { popup.style.display = 'none'; }, 200);
             }
-        });
-        popup.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
-        popup.addEventListener('mouseleave', () => { popup.style.display = 'none'; });
+        };
+        document.body.addEventListener('mouseout', mouseOutHandler);
+        eventListeners.push({ element: document.body, event: 'mouseout', handler: mouseOutHandler });
+
+        const popupEnterHandler = () => { clearTimeout(hideTimer); };
+        popup.addEventListener('mouseenter', popupEnterHandler);
+        eventListeners.push({ element: popup, event: 'mouseenter', handler: popupEnterHandler });
+
+        const popupLeaveHandler = () => { popup.style.display = 'none'; };
+        popup.addEventListener('mouseleave', popupLeaveHandler);
+        eventListeners.push({ element: popup, event: 'mouseleave', handler: popupLeaveHandler });
     }
 
     function positionPopup(event, popup) {
@@ -432,6 +970,26 @@
         if (x < 0) x = 5; if (y < 0) y = 5;
         popup.style.left = `${x}px`;
         popup.style.top = `${y}px`;
+    }
+
+    function setupMutationObserver() {
+        if (!window.MutationObserver) {
+            console.warn("Usurpia Lens: MutationObserver not supported in this browser.");
+            return;
+        }
+
+        let timeout;
+        const debounceAnalysis = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if (document.body.classList.contains('usurpia-active')) {
+                    runAnalysis();
+                }
+            }, 500);
+        };
+
+        mutationObserver = new MutationObserver(debounceAnalysis);
+        mutationObserver.observe(document.body, { childList: true, subtree: true });
     }
 
     main();
