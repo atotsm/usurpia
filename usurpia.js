@@ -1,4 +1,4 @@
-// Usurpia Lens Bookmarklet - V2.5.6 (Stable & Performant)
+// Usurpia Lens Bookmarklet - V2.5.6 (Stable & Responsive)
 // Fixes critical drag memory leaks, popup disappearance, and unresponsive filters.
 
 (function() {
@@ -67,7 +67,7 @@
             config.settings.maxHighlights = savedMaxHighlights ? parseInt(savedMaxHighlights, 10) : 15;
             for (const categoryKey in config.dictionary) {
                 const savedCategoryState = localStorage.getItem(`usurpia-category-${categoryKey}`);
-                config.settings.categories[categoryKey] = savedCategoryState === 'false' ? false : true;
+                config.settings.categories[categoryKey] = savedCategoryState !== 'false';
             }
         } catch (e) { console.warn("Usurpia Lens: localStorage access failed."); }
     }
@@ -167,8 +167,9 @@
         document.querySelectorAll('.usurpia-category-filter').forEach(checkbox => {
             addTrackedListener(checkbox, 'change', () => {
                 const category = checkbox.value;
-                document.body.classList.toggle(`usurpia-hide-${category}`, !checkbox.checked);
+                config.settings.categories[category] = checkbox.checked;
                 try { localStorage.setItem(`usurpia-category-${category}`, checkbox.checked); } catch (e) {}
+                runAnalysis(); // FIX: Re-run analysis to update highlights and scrollbar
             });
         });
         makeDraggable(panel);
@@ -212,13 +213,21 @@
     }
 
     function highlightKeywords(maxHighlights) {
+        // Build regex from ONLY active categories
+        let activeTerms = [];
+        for (const categoryKey in config.settings.categories) {
+            if (config.settings.categories[categoryKey]) {
+                config.dictionary[categoryKey].words.forEach(item => {
+                    activeTerms.push(...(item.terms || [item.term]));
+                });
+            }
+        }
+        if (activeTerms.length === 0) return;
+        const masterRegex = new RegExp(`\\b(${activeTerms.join('|')})\\b`, 'gi');
+
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => !n.parentElement?.closest('script, style, textarea, .usurpia-highlight, #usurpia-popup, #usurpia-panel') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
         let candidates = [], textNodes = [];
         while(walker.nextNode()) textNodes.push(walker.currentNode);
-        
-        const allTermStrings = Object.keys(termToCategoryMap);
-        if (allTermStrings.length === 0) return;
-        const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
 
         textNodes.forEach(node => {
             let match;
@@ -231,19 +240,19 @@
         if (candidates.length > maxHighlights) {
             highlightsToPerform = [];
             for (let i = 0; i < maxHighlights; i++) {
+                if(candidates.length === 0) break;
                 const randomIndex = Math.floor(Math.random() * candidates.length);
                 highlightsToPerform.push(candidates.splice(randomIndex, 1)[0]);
             }
         }
 
         const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset }) => {
-            const key = node;
-            if (!acc.has(key)) acc.set(key, { node, matches: [] });
-            acc.get(key).matches.push({ match, offset });
+            if (!acc.has(node)) acc.set(node, []);
+            acc.get(node).push({ match, offset });
             return acc;
         }, new Map());
 
-        groupedByNode.forEach(({ node, matches }) => {
+        groupedByNode.forEach((matches, node) => {
             matches.sort((a, b) => b.offset - a.offset);
             matches.forEach(({ match, offset }) => {
                 const termLower = match.toLowerCase();
@@ -285,7 +294,6 @@
 
     function setupPopupEventListeners(popup) {
         let hideTimer;
-        // For mouse users
         addTrackedListener(document.body, 'mouseover', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
                 clearTimeout(hideTimer);
@@ -300,22 +308,16 @@
         });
         addTrackedListener(popup, 'mouseenter', () => clearTimeout(hideTimer));
         addTrackedListener(popup, 'mouseleave', () => popup.style.display = 'none');
-        // For touch/click users
         addTrackedListener(document.body, 'click', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 if (activePopupTarget === e.target && popup.style.display === 'block') {
-                    popup.style.display = 'none';
-                    activePopupTarget = null;
+                    popup.style.display = 'none'; activePopupTarget = null;
                 } else {
-                    showPopup(popup, e.target);
-                    positionPopup(e, popup);
-                    activePopupTarget = e.target;
+                    showPopup(popup, e.target); positionPopup(e, popup); activePopupTarget = e.target;
                 }
             } else if (!e.target.closest('#usurpia-popup')) {
-                popup.style.display = 'none';
-                activePopupTarget = null;
+                popup.style.display = 'none'; activePopupTarget = null;
             }
         }, true);
     }
@@ -348,7 +350,16 @@
         const debounceAnalysis = (mutations) => {
             if (mutations.some(m => m.target.id?.startsWith('usurpia-'))) return;
             clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(runAnalysis, 750);
+
+            // A simple check for a large number of nodes added, typical of dynamic content loading.
+            let nodesAdded = 0;
+            for(const mutation of mutations) {
+                nodesAdded += mutation.addedNodes.length;
+            }
+
+            if (nodesAdded > 10) { // Heuristic: threshold for what constitutes a significant page change
+                 debounceTimeout = setTimeout(runAnalysis, 750);
+            }
         };
         mutationObserver = new MutationObserver(debounceAnalysis);
         mutationObserver.observe(document.body, { childList: true, subtree: true });
