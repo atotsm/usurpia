@@ -1,6 +1,5 @@
-// Usurpia Lens Bookmarklet - V2.3 (The "Diagnostic Scanner" Model)
-// This version integrates the full, categorized dictionary with a scrollbar heat map,
-// allowing for instant visualization and navigation of systemic language.
+// Usurpia Lens Bookmarklet - V2.4 (The "UI-Fixed" Scanner)
+// Corrects the popup disappearing issue by adding a grace period timer.
 
 (function() {
 
@@ -465,8 +464,12 @@
     }
 
     function setupEventListeners(popup) {
+        let hideTimer;
+
         document.body.addEventListener('mouseover', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
+                clearTimeout(hideTimer);
+                
                 const primaryTerm = e.target.getAttribute('data-term');
                 const wordData = config.dictionary.find(w => w.primaryTerm === primaryTerm);
                 if (wordData) {
@@ -481,11 +484,19 @@
                 }
             }
         });
+
         document.body.addEventListener('mouseout', e => {
-            if (e.target.classList.contains('usurpia-highlight') && !popup.matches(':hover')) {
-                popup.style.display = 'none';
+            if (e.target.classList.contains('usurpia-highlight')) {
+                hideTimer = setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 200);
             }
         });
+
+        popup.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimer);
+        });
+
         popup.addEventListener('mouseleave', () => {
             popup.style.display = 'none';
         });
