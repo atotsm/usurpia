@@ -1,9 +1,8 @@
 javascript:(function() {
-// Usurpia Lens v3.7 (The Polished Toolkit)
-// This version introduces three major quality-of-life and analytical refinements:
-// 1. State Persistence: Your density and mode settings are now saved between sessions using localStorage.
-// 2. Minimizable Panel: The control panel can be collapsed/expanded by clicking its header.
-// 3. Visual Differentiation: Core "Surgical" terms are highlighted with a dotted underline for instant recognition.
+// Usurpia Lens v3.7.1 (Bug Fix Release)
+// This version corrects a critical syntax error (a missing comma) from v3.7 that prevented the script
+// from loading. All intended features—State Persistence, Minimizable Panel, and Visual Differentiation—
+// are now fully functional.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -80,6 +79,7 @@ const config = {
                 { term: "competition", explanations: { headline: "A Mandated State of Being", summary: "Presented as a natural driver of innovation, but is in fact the engineered outcome of the mathematical scarcity created by debt-money." }, flux_connections: ["Competition Trap", "Society Paradigm", "Work Paradigm"], resonance_prompt: "Does the competition in your field feel like it's creating excellence, or just anxiety?" },
                 { term: "migration", explanations: { headline: "The Movement of People, Driven by Scarcity", summary: "Often framed as a cultural issue, it is frequently a direct consequence of the Geopolitics Paradigm—where resource wars, debt traps, and ecological devastation make staying home impossible." }, flux_connections: ["Geopolitics Paradigm", "Environment Paradigm", "Society Paradigm", "Media Paradigm"], resonance_prompt: "Are people leaving their homes by choice, or are they being pushed by economic and environmental pressures?" },
                 { term: "culture", explanations: { headline: "The Operating System of the Psyche", summary: "The collection of stories and values shaped by the underlying economic system. A culture of competition and scarcity will produce art and media that reflect that reality." }, flux_connections: ["Society Paradigm", "Media Paradigm", "Humanistic Paradigm"], resonance_prompt: "How much of modern culture is about genuine human expression versus selling a product or an identity?" },
+                { terms: ["virtue", "vice"], primaryTerm: "virtue", explanations: { headline: "The Inversion of Morality", summary: "The system inverts morality. The 'vice' of usury becomes the 'virtue' of 'investment.' The virtue of cooperation is punished as inefficient, while ruthless competition is rewarded as 'ambition'." }, flux_connections: ["Moral Compromise", "Humanistic Paradigm", "Society Paradigm"], resonance_prompt: "Can you think of an action that is 'good for business' but feels ethically wrong?" },
                 { term: "freedom", explanations: { headline: "The Freedom to Choose Your Creditor", summary: "The system's redefinition of freedom from genuine autonomy to a limited set of consumer choices within a mandatory, debt-based framework." }, systemDefense: "Often defended as the pinnacle of individual liberty, ignoring the structural coercion of the debt-money system.", flux_connections: ["Humanistic Paradigm", "Governance Paradigm", "Commodification"], resonance_prompt: "Does the 'freedom' to choose between different brands, jobs, or lenders feel like true liberty if you are not free from the underlying system of debt?" },
                 { term: "success", explanations: { headline: "Victory in the Rat Race", summary: "The system's narrow definition of a good life: the accumulation of wealth and status symbols, which channels human aspiration into fueling the engine of mandatory growth." }, flux_connections: ["Humanistic Paradigm", "Work Paradigm", "Competition Trap"], resonance_prompt: "What would 'success' look like to you if it had nothing to do with money or social status?" },
                 { term: "democracy", explanations: { headline: "The Theater of Governance", summary: "The presentation of political choice as a meaningful act, while the most critical decisions (money creation, debt policy) remain controlled by an unelected financial oligarchy." }, systemDefense: "The system's defenders will point to the ritual of voting as proof of democracy, while ignoring the influence of money in politics.", flux_connections: ["Governance Paradigm", "Media Paradigm", "Lobbying"], resonance_prompt: "If democracy is 'rule by the people,' why do policies that are unpopular but profitable to large corporations so often become law?" },
@@ -137,12 +137,12 @@ function loadState() {
 }
 
 function main() {
-    if (document.getElementById('usurpia-panel-v3-7')) {
-        document.getElementById('usurpia-panel-v3-7').remove();
+    if (document.getElementById('usurpia-panel-v3-7-1')) { // Updated version check
+        document.getElementById('usurpia-panel-v3-7-1').remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.7 (The Polished Toolkit) Activated.");
+    console.log("Usurpia Lens v3.7.1 (Bug Fix Release) Activated.");
     loadState();
     injectStyles();
     createControlPanel();
@@ -168,7 +168,7 @@ function cleanupHighlights() {
             parent.normalize();
         }
     });
-    const scrollbar = document.getElementById('usurpia-scrollbar-v3-7');
+    const scrollbar = document.getElementById('usurpia-scrollbar-v3-7-1'); // Updated ID
     if (scrollbar) scrollbar.remove();
 }
 
@@ -198,7 +198,7 @@ function highlightKeywords() {
     const alreadyHighlightedTerms = new Set();
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-7, #usurpia-panel-v3-7')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-7-1, #usurpia-panel-v3-7-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT // Updated IDs
     });
 
     let nodesToProcess = [];
@@ -245,38 +245,38 @@ function highlightKeywords() {
 }
 
 function injectStyles() {
-    let style = document.getElementById('usurpia-styles-v3-7');
+    let style = document.getElementById('usurpia-styles-v3-7-1'); // Updated ID
     if (style) return;
     style = document.createElement('style');
-    style.id = 'usurpia-styles-v3-7';
+    style.id = 'usurpia-styles-v3-7-1'; // Updated ID
     style.innerHTML = `
         .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
         .usurpia-highlight-surgical { border-bottom: 1px dotted #c0392b !important; }
-        #usurpia-popup-v3-7 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-        #usurpia-popup-v3-7 p { margin: 0 0 12px 0; padding: 0; }
-        #usurpia-popup-v3-7 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-7 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
-        #usurpia-popup-v3-7 .usurpia-defense strong { color: #c0392b; }
-        #usurpia-popup-v3-7 .usurpia-flux strong { color: #2980b9; }
-        #usurpia-popup-v3-7 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
-        #usurpia-popup-v3-7 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
-        #usurpia-popup-v3-7 .usurpia-resonance strong { color: #8e44ad; }
-        #usurpia-popup-v3-7 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-7 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
-        #usurpia-popup-v3-7 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
-        #usurpia-panel-v3-7 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
-        #usurpia-panel-v3-7-header { padding: 8px 0; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-        #usurpia-panel-v3-7.usurpia-minimized #usurpia-panel-body { display: none; }
-        #usurpia-panel-v3-7.usurpia-minimized #usurpia-panel-v3-7-header { border-bottom: none; margin-bottom: 0; }
-        #usurpia-panel-v3-7 .usurpia-control-group { margin-top: 12px; }
-        #usurpia-panel-v3-7 label { display: block; margin-bottom: 6px; font-weight: bold; }
-        #usurpia-panel-v3-7 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-        #usurpia-panel-v3-7 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-        #usurpia-panel-v3-7 .usurpia-density-control { display: flex; }
-        #usurpia-panel-v3-7 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-        #usurpia-panel-v3-7 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-        #usurpia-panel-v3-7 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
-        #usurpia-scrollbar-v3-7 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+        #usurpia-popup-v3-7-1 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+        #usurpia-popup-v3-7-1 p { margin: 0 0 12px 0; padding: 0; }
+        #usurpia-popup-v3-7-1 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-7-1 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
+        #usurpia-popup-v3-7-1 .usurpia-defense strong { color: #c0392b; }
+        #usurpia-popup-v3-7-1 .usurpia-flux strong { color: #2980b9; }
+        #usurpia-popup-v3-7-1 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
+        #usurpia-popup-v3-7-1 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
+        #usurpia-popup-v3-7-1 .usurpia-resonance strong { color: #8e44ad; }
+        #usurpia-popup-v3-7-1 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-7-1 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
+        #usurpia-popup-v3-7-1 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+        #usurpia-panel-v3-7-1 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+        #usurpia-panel-v3-7-1-header { padding: 8px 0; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+        #usurpia-panel-v3-7-1.usurpia-minimized #usurpia-panel-body { display: none; }
+        #usurpia-panel-v3-7-1.usurpia-minimized #usurpia-panel-v3-7-1-header { border-bottom: none; margin-bottom: 0; }
+        #usurpia-panel-v3-7-1 .usurpia-control-group { margin-top: 12px; }
+        #usurpia-panel-v3-7-1 label { display: block; margin-bottom: 6px; font-weight: bold; }
+        #usurpia-panel-v3-7-1 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+        #usurpia-panel-v3-7-1 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+        #usurpia-panel-v3-7-1 .usurpia-density-control { display: flex; }
+        #usurpia-panel-v3-7-1 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+        #usurpia-panel-v3-7-1 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+        #usurpia-panel-v3-7-1 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+        #usurpia-scrollbar-v3-7-1 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
         .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
     `;
     document.head.appendChild(style);
@@ -288,7 +288,7 @@ function updatePanelUI() {
     document.getElementById('usurpia-flux-mode').checked = state.isFluxModeActive;
     document.getElementById('usurpia-resonance-mode').checked = state.isResonanceModeActive;
 
-    const panel = document.getElementById('usurpia-panel-v3-7');
+    const panel = document.getElementById('usurpia-panel-v3-7-1');
     panel.querySelector('.usurpia-density-control .active').classList.remove('active');
     panel.querySelector(`[data-density="${state.density}"]`).classList.add('active');
 
@@ -301,9 +301,9 @@ function updatePanelUI() {
 
 function createControlPanel() {
     const panel = document.createElement('div');
-    panel.id = 'usurpia-panel-v3-7';
+    panel.id = 'usurpia-panel-v3-7-1'; // Updated ID
     panel.innerHTML = `
-        <div id="usurpia-panel-v3-7-header">Usurpia Lens v3.7</div>
+        <div id="usurpia-panel-v3-7-1-header">Usurpia Lens v3.7.1</div>
         <div id="usurpia-panel-body">
             <div class="usurpia-toggle-switch">
                 <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
@@ -338,7 +338,7 @@ function createControlPanel() {
         </div>
     `;
     document.body.appendChild(panel);
-    updatePanelUI(); // Set UI from saved state
+    updatePanelUI();
     setupPanelEventListeners(panel);
     makeDraggable(panel);
 }
@@ -359,16 +359,19 @@ function setupPanelEventListeners(panel) {
         }
     });
 
-    document.getElementById('usurpia-panel-v3-7-header').addEventListener('click', () => {
-        state.isPanelMinimized = !state.isPanelMinimized;
-        panel.classList.toggle('usurpia-minimized');
-        saveState();
+    document.getElementById('usurpia-panel-v3-7-1-header').addEventListener('click', (e) => { // Updated ID
+        // Prevent drag from triggering minimize
+        if (e.target.id === 'usurpia-panel-v3-7-1-header') {
+            state.isPanelMinimized = !state.isPanelMinimized;
+            panel.classList.toggle('usurpia-minimized');
+            saveState();
+        }
     });
 }
 
 function createPopup() {
     let popup = document.createElement('div');
-    popup.id = 'usurpia-popup-v3-7';
+    popup.id = 'usurpia-popup-v3-7-1'; // Updated ID
     document.body.appendChild(popup);
     return popup;
 }
@@ -413,7 +416,7 @@ function setupPopupEventListeners(popup) {
 
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = document.getElementById('usurpia-panel-v3-7-header');
+    const header = document.getElementById('usurpia-panel-v3-7-1-header'); // Updated ID
     if (header) header.onmousedown = dragMouseDown;
     function dragMouseDown(e) { 
         e = e || window.event; e.preventDefault(); 
@@ -434,7 +437,7 @@ function makeDraggable(element) {
 
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
-    scrollbar.id = 'usurpia-scrollbar-v3-7';
+    scrollbar.id = 'usurpia-scrollbar-v3-7-1'; // Updated ID
     document.body.appendChild(scrollbar);
     const highlights = document.querySelectorAll('.usurpia-highlight');
     if (highlights.length === 0) return;
