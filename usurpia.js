@@ -1,7 +1,7 @@
 javascript:(function() {
-// Usurpia Lens v3.7.1 (Corrected & Refined)
-// This version corrects a subtle data integrity issue (duplicate primaryTerm) to ensure stable
-// and predictable behavior. The dictionary structure and all advanced features from v3.7.0 are preserved.
+// Usurpia Lens v3.7.2 (Hover-Fix)
+// Corrects a critical typo within the popup generation logic that was preventing
+// the hover-over popups from appearing. All other functionality is identical to v3.7.1.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -148,7 +148,7 @@ function validateDictionary(dictionary) {
         for (const item of category.words) {
             const primaryTerm = item.primaryTerm || item.term;
             if (seenTerms.has(primaryTerm)) {
-                console.error(`Usurpia Lens v3.7.0: DICTIONARY INTEGRITY VIOLATION - Duplicate primaryTerm found: '${primaryTerm}'. This will cause unpredictable behavior.`);
+                console.error(`Usurpia Lens v3.7.2: DICTIONARY INTEGRITY VIOLATION - Duplicate primaryTerm found: '${primaryTerm}'. This will cause unpredictable behavior.`);
             }
             seenTerms.add(primaryTerm);
         }
@@ -156,13 +156,13 @@ function validateDictionary(dictionary) {
 }
 
 function main() {
-    const panelId = 'usurpia-panel-v3-7-0';
+    const panelId = 'usurpia-panel-v3-7-2';
     if (document.getElementById(panelId)) {
         document.getElementById(panelId).remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.7.0 (Conceptual Expansion) Activated.");
+    console.log("Usurpia Lens v3.7.2 (Hover-Fix) Activated.");
     
     validateDictionary(config.dictionary);
 
@@ -302,7 +302,7 @@ function createControlPanel(panelId) {
     const panel = document.createElement('div');
     panel.id = panelId;
     panel.innerHTML = `
-        <div id="${panelId}-header">Usurpia Lens v3.7.0</div>
+        <div id="${panelId}-header">Usurpia Lens v3.7.2</div>
         <div class="usurpia-toggle-switch">
             <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
             <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -388,7 +388,7 @@ function setupPopupEventListeners(popup) {
                 popupHTML += `
                     <div class="usurpia-links">
                         <a href="${config.settings.links.free}" target="_blank">Get The Full Lens (Free Option)</a>
-                        <a href="${config.gsettings.links.paid}" target="_blank" class="usurpia-link-paid">Become an Ambassador</a>
+                        <a href="${config.settings.links.paid}" target="_blank" class="usurpia-link-paid">Become an Ambassador</a>
                     </div>`;
                 popup.innerHTML = popupHTML;
                 popup.style.display = 'block';
