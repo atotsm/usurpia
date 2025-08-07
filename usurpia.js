@@ -1,13 +1,13 @@
 // Usurpia Lens Bookmarklet - V2.5.7 (Drag-Fixed & Stable)
 // Fixes the panel resizing bug by correctly managing CSS positioning during drag events.
+// FIX: Ensures the bookmarklet is always visible on activation, and persists panel position.
 
 (function() {
     // --- CONFIGURATION & DICTIONARY ---
-    // Dictionary content is assumed to be the same and is omitted for brevity.
     const config = {
         settings: {
             maxHighlights: 15,
-            initialState: 'on',
+            initialState: 'on', // This will be effectively overridden on each launch for immediate visibility
             categories: {}
         },
         dictionary: {
@@ -31,6 +31,9 @@
         });
     }
 
+    // Global flag for panel's first drag and position persistence
+    let isFirstDragForPanel = true;
+
     // --- CORE LOGIC ---
     let eventListeners = [];
     let mutationObserver = null;
@@ -44,32 +47,47 @@
 
     function main() {
         if (document.getElementById('usurpia-panel')) {
-            cleanup();
+            cleanup(); // Ensure only one instance runs at a time
         }
         console.log("Usurpia Lens v2.5.7 Activated.");
-        loadSettings();
+
+        loadSettings(); // Load previously saved settings for maxHighlights and categories
+
+        // --- FIX: Force initial state to 'on' when the bookmarklet is clicked ---
+        // This ensures the panel and highlights are visible immediately upon activation.
+        // The user can still turn it off using the toggle, which will save the 'off' state.
+        config.settings.initialState = 'on';
+        try { localStorage.setItem('usurpia-masterState', 'on'); } catch (e) { console.warn("Usurpia Lens: localStorage access failed for masterState."); }
+        // ------------------------------------------------------------------------
+
         injectStyles();
         const popup = createPopup();
-        createControlPanel();
+        createControlPanel(); // This will now correctly initialize the toggle as 'checked' and load position
         setupPopupEventListeners(popup);
         setupMutationObserver();
-        if (config.settings.initialState === 'on') {
-            document.body.classList.add('usurpia-active');
-            runAnalysis();
-        }
+
+        // Always add the active class and run analysis upon initial load now
+        document.body.classList.add('usurpia-active');
+        runAnalysis();
     }
 
     function loadSettings() {
         try {
+            // Note: config.settings.initialState will be overridden to 'on' in main() on each launch.
+            // This load is primarily for maxHighlights and category filters.
             const savedState = localStorage.getItem('usurpia-masterState');
+            // This line is effectively just for the initial checkbox state in createControlPanel if it were not overridden
             config.settings.initialState = savedState === 'off' ? 'off' : 'on';
+
             const savedMaxHighlights = localStorage.getItem('usurpia-maxHighlights');
             config.settings.maxHighlights = savedMaxHighlights ? parseInt(savedMaxHighlights, 10) : 15;
+
             for (const categoryKey in config.dictionary) {
                 const savedCategoryState = localStorage.getItem(`usurpia-category-${categoryKey}`);
+                // savedCategoryState is 'true' or 'false' string, convert to boolean
                 config.settings.categories[categoryKey] = savedCategoryState !== 'false';
             }
-        } catch (e) { console.warn("Usurpia Lens: localStorage access failed."); }
+        } catch (e) { console.warn("Usurpia Lens: localStorage access failed during settings load."); }
     }
 
     function runAnalysis() {
@@ -83,7 +101,9 @@
         document.querySelectorAll('.usurpia-highlight').forEach(span => {
             const parent = span.parentNode;
             if (parent) {
+                // If the span's parent still exists, replace the span with its text content
                 parent.replaceChild(document.createTextNode(span.textContent), span);
+                // Normalize the parent to merge adjacent text nodes (clean up after replacement)
                 parent.normalize();
             }
         });
@@ -94,10 +114,11 @@
         if (mutationObserver) mutationObserver.disconnect();
         if (debounceTimeout) clearTimeout(debounceTimeout);
         eventListeners.forEach(({ element, event, handler, options }) => element.removeEventListener(event, handler, options));
-        eventListeners = [];
+        eventListeners = []; // Clear the array
         ['usurpia-panel', 'usurpia-popup', 'usurpia-styles'].forEach(id => document.getElementById(id)?.remove());
         cleanupHighlights();
         document.body.classList.remove('usurpia-active');
+        // Ensure all category hide classes are removed on cleanup
         Object.keys(config.dictionary).forEach(key => document.body.classList.remove(`usurpia-hide-${key}`));
     }
 
@@ -119,7 +140,7 @@
             #usurpia-popup .usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
             #usurpia-scrollbar { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 999999998; }
             .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF0000; opacity: 0.7; cursor: pointer; }
-            #usurpia-panel { position: fixed; bottom: 20px; left: 20px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 15px; font-family: sans-serif; font-size: 12px; color: #333; width: 200px; }
+            #usurpia-panel { position: fixed; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 15px; font-family: sans-serif; font-size: 12px; color: #333; width: 200px; }
             #usurpia-panel-header { padding: 5px; background: #ddd; cursor: move; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; margin: -15px -15px 10px -15px; }
             #usurpia-panel label { display: flex; align-items: center; margin-bottom: 8px; user-select: none; }
             #usurpia-panel input[type="range"] { width: 100%; margin-top: 4px; }
@@ -149,35 +170,57 @@
             <div class="usurpia-control-group"><strong>Filter Categories:</strong><div style="margin-top: 5px;">${categoryCheckboxesHTML}</div></div>`;
         document.body.appendChild(panel);
 
+        // --- NEW: Load and apply saved panel position ---
+        try {
+            const savedTop = localStorage.getItem('usurpia-panel-top');
+            const savedLeft = localStorage.getItem('usurpia-panel-left');
+            const savedBottomAuto = localStorage.getItem('usurpia-panel-bottom-auto');
+
+            if (savedTop && savedLeft && savedBottomAuto === 'true') {
+                panel.style.top = savedTop;
+                panel.style.left = savedLeft;
+                panel.style.bottom = 'auto'; // Crucial for persistent top/left positioning
+                isFirstDragForPanel = false; // Prevent the 'first drag' conversion if position is restored
+            } else {
+                // Set initial position if no saved one, corresponding to CSS initial state
+                panel.style.bottom = '20px';
+                panel.style.left = '20px';
+            }
+        } catch (e) { console.warn("Usurpia Lens: Could not load panel position from localStorage."); }
+        // --------------------------------------------------
+
         const masterToggle = document.getElementById('usurpia-master-toggle');
         const densitySlider = document.getElementById('usurpia-density-slider');
+
         addTrackedListener(masterToggle, 'change', () => {
             const isEnabled = masterToggle.checked;
-            try { localStorage.setItem('usurpia-masterState', isEnabled ? 'on' : 'off'); } catch (e) {}
+            try { localStorage.setItem('usurpia-masterState', isEnabled ? 'on' : 'off'); } catch (e) { console.warn("Usurpia Lens: localStorage access failed for masterState update."); }
             document.body.classList.toggle('usurpia-active', isEnabled);
             if (!isEnabled) cleanupHighlights(); else runAnalysis();
         });
+
         addTrackedListener(densitySlider, 'input', () => { document.getElementById('usurpia-density-value').textContent = densitySlider.value; });
         addTrackedListener(densitySlider, 'change', () => {
             config.settings.maxHighlights = parseInt(densitySlider.value, 10);
-            try { localStorage.setItem('usurpia-maxHighlights', config.settings.maxHighlights); } catch (e) {}
+            try { localStorage.setItem('usurpia-maxHighlights', config.settings.maxHighlights); } catch (e) { console.warn("Usurpia Lens: localStorage access failed for maxHighlights."); }
             runAnalysis();
         });
+
         document.querySelectorAll('.usurpia-category-filter').forEach(checkbox => {
             addTrackedListener(checkbox, 'change', () => {
                 const category = checkbox.value;
                 config.settings.categories[category] = checkbox.checked;
-                try { localStorage.setItem(`usurpia-category-${category}`, checkbox.checked); } catch (e) {}
-                runAnalysis(); // FIX: Re-run analysis to update highlights based on filters
+                try { localStorage.setItem(`usurpia-category-${category}`, checkbox.checked); } catch (e) { console.warn(`Usurpia Lens: localStorage access failed for category ${category}.`); }
+                runAnalysis(); // Re-run analysis to update highlights based on filters
             });
         });
+
         makeDraggable(panel);
     }
 
     function makeDraggable(panel) {
         const header = document.getElementById('usurpia-panel-header');
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        let isFirstDrag = true;
 
         const dragMove = (e) => {
             if (e.type === 'touchmove') e.preventDefault();
@@ -195,15 +238,22 @@
             document.removeEventListener('touchend', dragEnd);
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('touchmove', dragMove);
+            // --- NEW: Save panel position ---
+            try {
+                localStorage.setItem('usurpia-panel-top', panel.style.top);
+                localStorage.setItem('usurpia-panel-left', panel.style.left);
+                localStorage.setItem('usurpia-panel-bottom-auto', 'true'); // Indicate that it's now positioned with top/left
+            } catch (e) { console.warn("Usurpia Lens: Could not save panel position."); }
+            // --------------------------------
         };
 
         const dragStart = (e) => {
             e.preventDefault();
-            if (isFirstDrag) {
+            if (isFirstDragForPanel) {
                 // FIX: On first drag, switch from `bottom` to `top` positioning
                 panel.style.top = `${panel.offsetTop}px`;
-                panel.style.bottom = 'auto';
-                isFirstDrag = false;
+                panel.style.bottom = 'auto'; // Crucial to prevent conflict between top and bottom
+                isFirstDragForPanel = false; // Mark that this conversion has happened
             }
             const event = e.type === 'touchstart' ? e.touches[0] : e;
             pos3 = event.clientX;
@@ -234,14 +284,29 @@
             }
         }
         if (activeTerms.length === 0) return;
-        const masterRegex = new RegExp(`\\b(${activeTerms.join('|')})\\b`, 'gi');
+        // Create a regex that matches whole words only
+        const masterRegex = new RegExp(`\\b(${activeTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
         
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => !n.parentElement?.closest('script, style, textarea, .usurpia-highlight, #usurpia-popup, #usurpia-panel') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { 
+            acceptNode: n => {
+                // Only process text nodes that are not inside script, style, textarea, or the bookmarklet's own UI elements
+                if (n.parentElement?.closest('script, style, textarea, [class*="usurpia-"], #usurpia-popup, #usurpia-panel')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                // Reject nodes that are just whitespace to avoid unnecessary processing
+                if (!n.nodeValue.trim()) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
         let candidates = [], textNodes = [];
         while(walker.nextNode()) textNodes.push(walker.currentNode);
 
         textNodes.forEach(node => {
             let match;
+            // Reset regex lastIndex for consistent results across multiple nodes
+            masterRegex.lastIndex = 0; 
             while ((match = masterRegex.exec(node.nodeValue)) !== null) {
                 candidates.push({ node, match: match[1], offset: match.index });
             }
@@ -249,14 +314,16 @@
         
         let highlightsToPerform = candidates;
         if (candidates.length > maxHighlights) {
+            // Randomly select highlights if there are too many
             highlightsToPerform = [];
             for (let i = 0; i < maxHighlights; i++) {
-                if(candidates.length === 0) break;
+                if(candidates.length === 0) break; // Stop if no more candidates
                 const randomIndex = Math.floor(Math.random() * candidates.length);
                 highlightsToPerform.push(candidates.splice(randomIndex, 1)[0]);
             }
         }
 
+        // Group by node to process each text node efficiently and avoid re-walking
         const groupedByNode = highlightsToPerform.reduce((acc, { node, match, offset }) => {
             if (!acc.has(node)) acc.set(node, []);
             acc.get(node).push({ match, offset });
@@ -264,22 +331,25 @@
         }, new Map());
 
         groupedByNode.forEach((matches, node) => {
+            // Sort matches by offset in descending order to avoid issues with changing node offsets
+            // when replacing text with spans. Replacing from end to start keeps indices valid.
             matches.sort((a, b) => b.offset - a.offset);
             matches.forEach(({ match, offset }) => {
                 const termLower = match.toLowerCase();
                 const category = termToCategoryMap[termLower];
                 const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === termLower));
-                if (entry && node.parentNode) {
+                if (entry && node.parentNode && category && config.settings.categories[category]) { // Ensure category is enabled
                     const span = document.createElement('span');
                     span.className = 'usurpia-highlight';
                     span.setAttribute('data-term', entry.primaryTerm);
                     span.setAttribute('data-category', category);
                     span.textContent = match;
+                    
                     const range = document.createRange();
                     range.setStart(node, offset);
                     range.setEnd(node, offset + match.length);
-                    range.deleteContents();
-                    range.insertNode(span);
+                    range.deleteContents(); // Remove the original text
+                    range.insertNode(span); // Insert the highlighted span
                 }
             });
         });
@@ -289,14 +359,19 @@
         const scrollbar = document.createElement('div');
         scrollbar.id = 'usurpia-scrollbar';
         document.body.appendChild(scrollbar);
-        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight, document.body.clientHeight, document.documentElement.clientHeight);
         document.querySelectorAll('.usurpia-highlight').forEach(highlight => {
+            // Ensure highlight is visible before creating a mark for it
+            if (highlight.offsetParent === null || window.getComputedStyle(highlight).display === 'none') {
+                return;
+            }
             const rect = highlight.getBoundingClientRect();
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const relativePosition = ((rect.top + scrollTop) / docHeight) * 100;
             const mark = document.createElement('div');
             mark.className = 'usurpia-scrollbar-mark';
-            mark.style.top = `${relativePosition}%`;
+            // Clamp position between 0 and 100% to avoid marks outside the scrollbar if calculation is slightly off
+            mark.style.top = `${Math.max(0, Math.min(100, relativePosition))}%`;
             mark.title = `Jump to "${highlight.textContent}"`;
             addTrackedListener(mark, 'click', () => highlight.scrollIntoView({ behavior: 'smooth', block: 'center' }));
             scrollbar.appendChild(mark);
@@ -313,7 +388,8 @@
             }
         });
         addTrackedListener(document.body, 'mouseout', e => {
-            if (e.target.classList.contains('usurpia-highlight')) {
+            // Check if the relatedTarget (where the mouse moved to) is inside the popup
+            if (e.target.classList.contains('usurpia-highlight') && !e.relatedTarget?.closest('#usurpia-popup')) {
                 hideTimer = setTimeout(() => popup.style.display = 'none', 300);
             }
         });
@@ -321,16 +397,17 @@
         addTrackedListener(popup, 'mouseleave', () => popup.style.display = 'none');
         addTrackedListener(document.body, 'click', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
-                e.preventDefault(); e.stopPropagation();
+                e.preventDefault(); e.stopPropagation(); // Prevent default link behavior and stop propagation
                 if (activePopupTarget === e.target && popup.style.display === 'block') {
                     popup.style.display = 'none'; activePopupTarget = null;
                 } else {
                     showPopup(popup, e.target); positionPopup(e, popup); activePopupTarget = e.target;
                 }
-            } else if (!e.target.closest('#usurpia-popup')) {
+            } else if (!e.target.closest('#usurpia-popup') && !e.target.closest('#usurpia-panel')) {
+                // Hide popup if click is not on popup or panel
                 popup.style.display = 'none'; activePopupTarget = null;
             }
-        }, true);
+        }, true); // Use capture phase to ensure event is caught before others might stop propagation
     }
 
     function showPopup(popup, target) {
@@ -349,23 +426,37 @@
         let x = event.clientX + 15, y = event.clientY + 15;
         const screenWidth = window.innerWidth, screenHeight = window.innerHeight;
         const popupWidth = popup.offsetWidth, popupHeight = popup.offsetHeight;
-        if (x + popupWidth > screenWidth) x = event.clientX - popupWidth - 15;
-        if (y + popupHeight > screenHeight) y = event.clientY - popupHeight - 15;
-        if (x < 0) x = 5; if (y < 0) y = 5;
+
+        // Adjust X position if it goes off screen to the right
+        if (x + popupWidth > screenWidth) {
+            x = event.clientX - popupWidth - 15;
+        }
+        // Adjust Y position if it goes off screen to the bottom
+        if (y + popupHeight > screenHeight) {
+            y = event.clientY - popupHeight - 15;
+        }
+        // Ensure it doesn't go off screen to the left or top
+        if (x < 0) x = 5;
+        if (y < 0) y = 5;
+
         popup.style.left = `${x}px`;
         popup.style.top = `${y}px`;
     }
 
     function setupMutationObserver() {
-        if (!window.MutationObserver) return;
+        if (!window.MutationObserver) return; // Browser does not support MutationObserver
         const debounceAnalysis = (mutations) => {
-            if (mutations.some(m => m.target.id?.startsWith('usurpia-'))) return;
+            // Filter out mutations that originate from the bookmarklet's own UI elements
+            if (mutations.some(m => m.target.id?.startsWith('usurpia-') || m.target.closest('[class*="usurpia-"]'))) {
+                return;
+            }
             clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(runAnalysis, 750);
+            debounceTimeout = setTimeout(runAnalysis, 750); // Debounce to prevent excessive re-analysis
         };
         mutationObserver = new MutationObserver(debounceAnalysis);
-        mutationObserver.observe(document.body, { childList: true, subtree: true });
+        // Observe changes to the document body and its subtree
+        mutationObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
     }
 
-    main();
+    main(); // Initialize the bookmarklet
 })();
