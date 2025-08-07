@@ -1,5 +1,5 @@
-// Usurpia Lens Bookmarklet - V2.5.6 (Stable & Responsive)
-// Fixes critical drag memory leaks, popup disappearance, and unresponsive filters.
+// Usurpia Lens Bookmarklet - V2.5.7 (Drag-Fixed & Stable)
+// Fixes the panel resizing bug by correctly managing CSS positioning during drag events.
 
 (function() {
     // --- CONFIGURATION & DICTIONARY ---
@@ -46,7 +46,7 @@
         if (document.getElementById('usurpia-panel')) {
             cleanup();
         }
-        console.log("Usurpia Lens v2.5.6 Activated.");
+        console.log("Usurpia Lens v2.5.7 Activated.");
         loadSettings();
         injectStyles();
         const popup = createPopup();
@@ -137,11 +137,10 @@
         let categoryCheckboxesHTML = '';
         for (const categoryKey in config.dictionary) {
             const isChecked = config.settings.categories[categoryKey] !== false;
-            if (!isChecked) document.body.classList.add(`usurpia-hide-${categoryKey}`);
             categoryCheckboxesHTML += `<label><input type="checkbox" class="usurpia-category-filter" value="${categoryKey}" ${isChecked ? 'checked' : ''}><span>${config.dictionary[categoryKey].name}</span></label>`;
         }
         panel.innerHTML = `
-            <div id="usurpia-panel-header">Usurpia Lens v2.5.6</div>
+            <div id="usurpia-panel-header">Usurpia Lens v2.5.7</div>
             <label><input type="checkbox" id="usurpia-master-toggle" ${config.settings.initialState === 'on' ? 'checked' : ''}><strong>Lens Enabled</strong></label>
             <div class="usurpia-control-group">
                 <div class="usurpia-density-label"><span>Highlight Density:</span><span id="usurpia-density-value">${config.settings.maxHighlights}</span></div>
@@ -169,7 +168,7 @@
                 const category = checkbox.value;
                 config.settings.categories[category] = checkbox.checked;
                 try { localStorage.setItem(`usurpia-category-${category}`, checkbox.checked); } catch (e) {}
-                runAnalysis(); // FIX: Re-run analysis to update highlights and scrollbar
+                runAnalysis(); // FIX: Re-run analysis to update highlights based on filters
             });
         });
         makeDraggable(panel);
@@ -178,24 +177,37 @@
     function makeDraggable(panel) {
         const header = document.getElementById('usurpia-panel-header');
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let isFirstDrag = true;
+
         const dragMove = (e) => {
             if (e.type === 'touchmove') e.preventDefault();
             const event = e.type === 'touchmove' ? e.touches[0] : e;
-            pos1 = pos3 - event.clientX; pos2 = pos4 - event.clientY;
-            pos3 = event.clientX; pos4 = event.clientY;
+            pos1 = pos3 - event.clientX;
+            pos2 = pos4 - event.clientY;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
             panel.style.top = `${panel.offsetTop - pos2}px`;
             panel.style.left = `${panel.offsetLeft - pos1}px`;
         };
+
         const dragEnd = () => {
             document.removeEventListener('mouseup', dragEnd);
             document.removeEventListener('touchend', dragEnd);
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('touchmove', dragMove);
         };
+
         const dragStart = (e) => {
             e.preventDefault();
+            if (isFirstDrag) {
+                // FIX: On first drag, switch from `bottom` to `top` positioning
+                panel.style.top = `${panel.offsetTop}px`;
+                panel.style.bottom = 'auto';
+                isFirstDrag = false;
+            }
             const event = e.type === 'touchstart' ? e.touches[0] : e;
-            pos3 = event.clientX; pos4 = event.clientY;
+            pos3 = event.clientX;
+            pos4 = event.clientY;
             document.addEventListener('mouseup', dragEnd);
             document.addEventListener('touchend', dragEnd);
             document.addEventListener('mousemove', dragMove);
@@ -213,7 +225,6 @@
     }
 
     function highlightKeywords(maxHighlights) {
-        // Build regex from ONLY active categories
         let activeTerms = [];
         for (const categoryKey in config.settings.categories) {
             if (config.settings.categories[categoryKey]) {
@@ -224,7 +235,7 @@
         }
         if (activeTerms.length === 0) return;
         const masterRegex = new RegExp(`\\b(${activeTerms.join('|')})\\b`, 'gi');
-
+        
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => !n.parentElement?.closest('script, style, textarea, .usurpia-highlight, #usurpia-popup, #usurpia-panel') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
         let candidates = [], textNodes = [];
         while(walker.nextNode()) textNodes.push(walker.currentNode);
@@ -350,16 +361,7 @@
         const debounceAnalysis = (mutations) => {
             if (mutations.some(m => m.target.id?.startsWith('usurpia-'))) return;
             clearTimeout(debounceTimeout);
-
-            // A simple check for a large number of nodes added, typical of dynamic content loading.
-            let nodesAdded = 0;
-            for(const mutation of mutations) {
-                nodesAdded += mutation.addedNodes.length;
-            }
-
-            if (nodesAdded > 10) { // Heuristic: threshold for what constitutes a significant page change
-                 debounceTimeout = setTimeout(runAnalysis, 750);
-            }
+            debounceTimeout = setTimeout(runAnalysis, 750);
         };
         mutationObserver = new MutationObserver(debounceAnalysis);
         mutationObserver.observe(document.body, { childList: true, subtree: true });
