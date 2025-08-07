@@ -1,8 +1,9 @@
 javascript:(function() {
 
     // Usurpia Lens v3.2 (Five-Phase Dissector)
-    // This version implements the refined, five-phase dictionary structure for maximum
-    // analytical precision. The categories now map directly to the causal chain in The Lens.
+    // This version implements a refined five-phase dictionary, separating Technology and the
+    // Inner World into distinct categories for maximum analytical precision. The exclusive
+    // filtering logic remains the core feature.
 
     // --- CONFIGURATION & DICTIONARY ---
     const config = {
@@ -25,7 +26,7 @@ javascript:(function() {
                     { term: "usury", explanations: { headline: "The Ancient Poison", summary: "The ancient term for lending money at interest, rebranded as 'progress' to create the modern system." } },
                     { term: "financialization", explanations: { headline: "The Casino Economy", summary: "The process of turning every aspect of the real economy (housing, food) into a speculative asset." } },
                     { term: "inflation", explanations: { headline: "Systemic Currency Debasement", summary: "A hidden tax used to manage unpayable debt levels by devaluing the currency and eroding savings." } },
-                    { term: "inequality", explanations: { headline: "A Feature, Not a Bug", summary: "The guaranteed mathematical outcome of a system where interest funnels wealth from debtors to creditors." }, systemDefense: "Framed as a natural outcome of 'meritocracy,' ignoring how the system's rules guarantee wealth concentration." }
+                    { term: "inequality", explanations: { headline: "A Feature, Not a Bug", summary: "The guaranteed mathematical outcome of a system where interest funnels wealth from debtors to creditors." } }
                 ]
             },
             physicalWorld: {
@@ -66,7 +67,7 @@ javascript:(function() {
                 words: [
                     { term: "burnout", explanations: { headline: "A System Failure, Labeled a Personal One", summary: "The inevitable human response to the relentless pressure of the 'Competition Trap,' framed as an individual's inability to cope." } },
                     { term: "loneliness", explanations: { headline: "The Epidemic of Disconnection", summary: "The social consequence of a system that pits us against each other and replaces deep connection with transactional relationships." } },
-                    { term: "conspiracy", explanations: { headline: "The Thought-Terminating Weapon", summary: "A word deployed to ridicule and dismiss any rational analysis of the system's foundational rules." }, systemDefense: "Works by conflating a rational critique of the *rules of the game* with an irrational belief about a secret cabal of *players*." } },
+                    { term: "conspiracy", explanations: { headline: "The Thought-Terminating Weapon", summary: "A word deployed to ridicule and dismiss any rational analysis of the system's foundational rules." }, systemDefense: "Works by conflating a rational critique of the *rules of the game* with an irrational belief about a secret cabal of *players*." },
                     { term: "scapegoat", explanations: { headline: "The Distraction Target", summary: "A person or group used to absorb public anger, misdirecting it from the impersonal debt-system onto a false enemy." } }
                 ]
             }
@@ -125,7 +126,6 @@ javascript:(function() {
         if (state.analysisMode === 'fullSpectrum') {
             activeCategories = Object.keys(config.dictionary);
         } else {
-            // EXCLUSIVE LOGIC: Only the selected category is active.
             activeCategories = [state.analysisMode];
         }
         
@@ -185,9 +185,7 @@ javascript:(function() {
                 range.setEnd(currentNode, match.index + match[0].length);
                 range.deleteContents();
                 range.insertNode(span);
-                if (span.previousSibling) {
-                    currentNode = span.previousSibling;
-                }
+                currentNode = span.previousSibling || node; 
             });
         });
     }
@@ -231,7 +229,7 @@ javascript:(function() {
         Object.keys(config.dictionary).forEach(key => {
             selectOptions += `<option value="${key}">${config.dictionary[key].name}</option>`;
         });
-        selectOptions += `<option value="fullSpectrum">Full Spectrum Analysis</option>`;
+        selectOptions += `<option value="fullSpectrum">Full Spectrum</option>`;
 
         panel.innerHTML = `
             <div id="usurpia-panel-v3-2-header">Usurpia Lens v3.2</div>
@@ -240,7 +238,7 @@ javascript:(function() {
                 <input type="checkbox" id="usurpia-master-toggle" checked>
             </div>
             <div class="usurpia-control-group">
-                <label for="usurpia-analysis-mode">Analysis Mode</label>
+                <label for="usurpia-analysis-mode">Analysis Phase</label>
                 <select id="usurpia-analysis-mode">${selectOptions}</select>
             </div>
             <div class="usurpia-control-group">
@@ -314,7 +312,7 @@ javascript:(function() {
     
     function makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const header = document.getElementById(`usurpia-panel-v3-2-header`);
+        const header = document.getElementById('usurpia-panel-v3-2-header');
         if (header) header.onmousedown = dragMouseDown;
         function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; element.style.top = `${element.offsetTop}px`; element.style.bottom = 'auto'; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
         function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
