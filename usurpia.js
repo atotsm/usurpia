@@ -1,13 +1,13 @@
 javascript:(function() {
 
-    // Usurpia Lens v2.9.1 (Logic Hotfix)
-    // This version corrects a critical bug in the getActiveTerms function that prevented
-    // the Analysis Mode dropdown from correctly updating the highlights.
+    // Usurpia Lens v3.0 (Sampling Engine Fix)
+    // This major version fixes the "Priority Fallacy" bug. It now scans the entire page for all possible
+    // terms before highlighting a randomized, representative sample, ensuring balanced analysis across all modes.
 
     // --- CONFIGURATION & DICTIONARY ---
     const config = {
         settings: {
-            densityLevels: { surgical: 10, standard: 25, deepscan: 60 },
+            densityLevels: { surgical: 15, standard: 30, deepscan: 75 },
             links: {
                 free: "https://zipcadia.gumroad.com",
                 paid: "https://zipcadia.gumroad.com/l/bundle1"
@@ -76,8 +76,8 @@ javascript:(function() {
     }
 
     function main() {
-        if (document.getElementById('usurpia-panel-v2-9-1')) {
-            document.getElementById('usurpia-panel-v2-9-1').remove();
+        if (document.getElementById('usurpia-panel-v3-0')) {
+            document.getElementById('usurpia-panel-v3-0').remove();
             cleanupHighlights();
             return;
         }
@@ -104,7 +104,7 @@ javascript:(function() {
                 parent.normalize();
             }
         });
-        const scrollbar = document.getElementById('usurpia-scrollbar-v2-9-1');
+        const scrollbar = document.getElementById('usurpia-scrollbar-v3-0');
         if (scrollbar) scrollbar.remove();
     }
 
@@ -133,74 +133,83 @@ javascript:(function() {
 
         const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
         const maxHighlights = config.settings.densityLevels[state.density];
-        let highlightCount = 0;
 
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-            acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v2-9-1, #usurpia-panel-v2-9-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-0, #usurpia-panel-v3-0')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
         });
 
-        let nodesToProcess = [];
-        while(walker.nextNode()) nodesToProcess.push(walker.currentNode);
+        let candidates = [];
+        let textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
 
-        for (const node of nodesToProcess) {
-            if (highlightCount >= maxHighlights) break;
-            const matches = [...node.nodeValue.matchAll(masterRegex)];
-            if (matches.length === 0) continue;
-
-            const fragment = document.createDocumentFragment();
-            let lastIndex = 0;
-
-            for (const match of matches) {
-                if (highlightCount >= maxHighlights) break;
-                
-                const matchedText = match[0];
-                const offset = match.index;
-                const entry = activeTermEntries.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === matchedText.toLowerCase()));
-
-                if(entry) {
-                    if (lastIndex !== offset) fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, offset)));
-                    const span = document.createElement('span');
-                    span.className = 'usurpia-highlight';
-                    span.setAttribute('data-term', entry.primaryTerm);
-                    span.textContent = matchedText;
-                    fragment.appendChild(span);
-                    lastIndex = offset + matchedText.length;
-                    highlightCount++;
+        textNodes.forEach(node => {
+            [...node.nodeValue.matchAll(masterRegex)].forEach(match => {
+                const termEntry = activeTermEntries.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === match[0].toLowerCase()));
+                if(termEntry){
+                    candidates.push({ node, match, termEntry });
                 }
+            });
+        });
+
+        if (candidates.length > maxHighlights) {
+            for (let i = candidates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
             }
-            if (lastIndex > 0) {
-                if (lastIndex < node.nodeValue.length) fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex)));
-                if(node.parentNode) node.parentNode.replaceChild(fragment, node);
-            }
+            candidates = candidates.slice(0, maxHighlights);
         }
+
+        const groupedByNode = candidates.reduce((acc, { node, match, termEntry }) => {
+            if (!acc.has(node)) acc.set(node, []);
+            acc.get(node).push({ match, termEntry });
+            return acc;
+        }, new Map());
+
+        groupedByNode.forEach((matches, node) => {
+            matches.sort((a, b) => b.match.index - a.match.index);
+            let currentNode = node;
+            matches.forEach(({ match, termEntry }) => {
+                const span = document.createElement('span');
+                span.className = 'usurpia-highlight';
+                span.setAttribute('data-term', termEntry.primaryTerm);
+                span.textContent = match[0];
+                
+                const range = document.createRange();
+                range.setStart(currentNode, match.index);
+                range.setEnd(currentNode, match.index + match[0].length);
+                range.deleteContents();
+                range.insertNode(span);
+                currentNode = span.previousSibling; 
+            });
+        });
     }
-    
+
     function injectStyles() {
-        let style = document.getElementById('usurpia-styles-v2-9-1');
+        let style = document.getElementById('usurpia-styles-v3-0');
         if (style) return;
         style = document.createElement('style');
-        style.id = 'usurpia-styles-v2-9-1';
+        style.id = 'usurpia-styles-v3-0';
         style.innerHTML = `
             .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
-            #usurpia-popup-v2-9-1 { position: fixed; display: none; width: 300px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-            #usurpia-popup-v2-9-1 p { margin: 0 0 12px 0; padding: 0; }
-            #usurpia-popup-v2-9-1 .usurpia-defense { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; font-size: 13px; color: #444; }
-            #usurpia-popup-v2-9-1 .usurpia-defense strong { color: #c0392b; }
-            #usurpia-popup-v2-9-1 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-            #usurpia-popup-v2-9-1 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
-            #usurpia-popup-v2-9-1 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
-            #usurpia-panel-v2-9-1 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 260px; }
-            #usurpia-panel-v2-9-1-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-            #usurpia-panel-v2-9-1 .usurpia-control-group { margin-top: 12px; }
-            #usurpia-panel-v2-9-1 label { display: block; margin-bottom: 6px; font-weight: bold; }
-            #usurpia-panel-v2-9-1 select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ced4da; }
-            #usurpia-panel-v2-9-1 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-            #usurpia-panel-v2-9-1 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-            #usurpia-panel-v2-9-1 .usurpia-density-control { display: flex; }
-            #usurpia-panel-v2-9-1 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-            #usurpia-panel-v2-9-1 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-            #usurpia-panel-v2-9-1 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
-            #usurpia-scrollbar-v2-9-1 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+            #usurpia-popup-v3-0 { position: fixed; display: none; width: 300px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+            #usurpia-popup-v3-0 p { margin: 0 0 12px 0; padding: 0; }
+            #usurpia-popup-v3-0 .usurpia-defense { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; font-size: 13px; color: #444; }
+            #usurpia-popup-v3-0 .usurpia-defense strong { color: #c0392b; }
+            #usurpia-popup-v3-0 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+            #usurpia-popup-v3-0 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
+            #usurpia-popup-v3-0 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+            #usurpia-panel-v3-0 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 260px; }
+            #usurpia-panel-v3-0-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+            #usurpia-panel-v3-0 .usurpia-control-group { margin-top: 12px; }
+            #usurpia-panel-v3-0 label { display: block; margin-bottom: 6px; font-weight: bold; }
+            #usurpia-panel-v3-0 select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ced4da; }
+            #usurpia-panel-v3-0 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+            #usurpia-panel-v3-0 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+            #usurpia-panel-v3-0 .usurpia-density-control { display: flex; }
+            #usurpia-panel-v3-0 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+            #usurpia-panel-v3-0 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+            #usurpia-panel-v3-0 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+            #usurpia-scrollbar-v3-0 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
             .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
         `;
         document.head.appendChild(style);
@@ -208,7 +217,7 @@ javascript:(function() {
     
     function createControlPanel() {
         const panel = document.createElement('div');
-        panel.id = 'usurpia-panel-v2-9-1';
+        panel.id = 'usurpia-panel-v3-0';
         
         let selectOptions = '';
         Object.keys(config.dictionary).forEach(key => {
@@ -217,7 +226,7 @@ javascript:(function() {
         selectOptions += `<option value="fullSpectrum">Full Spectrum</option>`;
 
         panel.innerHTML = `
-            <div id="usurpia-panel-v2-9-1-header">Usurpia Lens v2.9.1</div>
+            <div id="usurpia-panel-v3-0-header">Usurpia Lens v3.0</div>
             <div class="usurpia-toggle-switch">
                 <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
                 <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -262,7 +271,7 @@ javascript:(function() {
 
     function createPopup() {
         let popup = document.createElement('div');
-        popup.id = 'usurpia-popup-v2-9-1';
+        popup.id = 'usurpia-popup-v3-0';
         document.body.appendChild(popup);
         return popup;
     }
@@ -297,7 +306,7 @@ javascript:(function() {
     
     function makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const header = document.getElementById('usurpia-panel-v2-9-1-header');
+        const header = document.getElementById('usurpia-panel-v3-0-header');
         if (header) header.onmousedown = dragMouseDown;
         function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; element.style.top = `${element.offsetTop}px`; element.style.bottom = 'auto'; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
         function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
@@ -306,7 +315,7 @@ javascript:(function() {
     
     function createScrollbarMarks() {
         const scrollbar = document.createElement('div');
-        scrollbar.id = 'usurpia-scrollbar-v2-9-1';
+        scrollbar.id = 'usurpia-scrollbar-v3-0';
         document.body.appendChild(scrollbar);
         const highlights = document.querySelectorAll('.usurpia-highlight');
         if (highlights.length === 0) return;
