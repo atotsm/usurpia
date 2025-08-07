@@ -1,8 +1,8 @@
 javascript:(function() {
-// Usurpia Lens v3.2 (First Occurrence)
-// This version introduces a key usability enhancement: "first-occurrence-only" highlighting.
-// The script now tracks which terms have been highlighted and will only mark the first instance
-// of each unique term, reducing clutter and increasing the analytical impact of each highlight.
+// Usurpia Lens v3.3 (Massive Lexicon Expansion)
+// This is a major dictionary update, integrating dozens of new terms across all paradigms.
+// The goal is to dramatically increase the tool's sensitivity and "hit rate" on a wide variety of content,
+// from financial and political analysis to lifestyle and personal well-being articles.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -22,11 +22,11 @@ const config = {
                 { terms: ["debt", "indebtedness"], primaryTerm: "debt", explanations: { headline: "The Tool of Control", summary: "The primary mechanism for control and wealth transfer. Perpetual indebtedness ensures compliance." }, systemDefense: "Normalized as a 'fact of life' or a 'tool for investment.'", flux_connections: ["Work Paradigm", "Education Paradigm", "Humanistic Paradigm"], resonance_prompt: "Beyond a financial number, how has the feeling of debt influenced your major life choices?" },
                 { term: "debt-money", explanations: { headline: "Interest-Bearing Debt-Money", summary: "The core design flaw: virtually all money is created by private banks as interest-bearing debt." }, flux_connections: ["Governance Paradigm", "Justice Paradigm"], resonance_prompt: "If money is created with debt, where does the money to pay the interest come from?" },
                 { term: "interest", explanations: { headline: "The Extraction Engine", summary: "The 'something for nothing' charge that powers wealth extraction and necessitates exponential growth." }, flux_connections: ["Inequality", "Financialization"], resonance_prompt: "Consider your mortgage or credit card. How much of your life's energy is spent working to pay interest?" },
+                { term: "profit", explanations: { headline: "The System's Prime Directive", summary: "The signal that the system values above all others. In a debt-based economy, the relentless pursuit of profit is necessary to outrun compounding interest, justifying any and all Moral Compromise." }, flux_connections: ["Work Paradigm", "Financialization", "Moral Compromise"], resonance_prompt: "What have you seen sacrificed in the name of maximizing profit?" },
                 { term: "usury", explanations: { headline: "The Ancient Poison", summary: "The ancient term for lending money at interest, rebranded as 'progress' to create the modern system." }, flux_connections: ["Moral Compromise", "Historical Roots"], resonance_prompt: "Why was this practice once considered a severe sin, and what changed to make it the foundation of our world?" },
-                { term: "inflation", explanations: { headline: "Systemic Currency Debasement", summary: "A hidden tax used to manage unpayable debt levels by devaluing the currency and eroding savings." }, flux_connections: ["Poverty as Punishment", "Retirement"], resonance_prompt: "Have your wages kept pace with the rising cost of essentials like housing, food, and education?" },
-                { term: "inequality", explanations: { headline: "A Feature, Not a Bug", summary: "The guaranteed mathematical outcome of a system where interest funnels wealth from debtors to creditors." }, systemDefense: "Framed as a natural outcome of 'meritocracy.'", flux_connections: ["Society Paradigm", "Justice Paradigm", "Governance Paradigm"], resonance_prompt: "Where do you see the gap between the wealthy and the poor manifest most clearly in your daily life?" },
                 { term: "capitalism", explanations: { headline: "The Vehicle for the Engine", summary: "The ideological 'host' commandeered by the Debt-Money Operating System, forcing it into its most extractive and destructive form." }, flux_connections: ["Work Paradigm", "Environment Paradigm", "Society Paradigm"], resonance_prompt: "Is the 'capitalism' you see today focused on creating real value or on extracting financial value?" },
-                { term: "loan", explanations: { headline: "The Point of Infection", summary: "The specific transaction where new debt-money is created. It is the vector through which an individual is hooked into the system of perpetual interest payments." }, flux_connections: ["Debt", "Work Paradigm", "Education Paradigm"], resonance_prompt: "How has the need to get (or avoid) a loan shaped a major decision in your life?" }
+                { term: "commodification", explanations: { headline: "The 'Everything for Sale' Logic", summary: "The system's core process of turning everything—nature, knowledge, relationships, time—into a product or service that can be priced, sold, and financialized." }, flux_connections: ["Financialization", "Humanistic Paradigm", "Love Paradigm", "Environment Paradigm"], resonance_prompt: "What part of your life do you feel is being relentlessly turned into something to be bought and sold?" },
+                { term: "Usurpia", explanations: { headline: "A Name for the System", summary: "A term for the global empire built upon the principles of usury; a world captured by the logic of debt-money and mandatory growth." }, flux_connections: ["All Paradigms"], resonance_prompt: "Does giving the system a name help you to see it more clearly as a distinct, external force?" }
             ]
         },
         financial_control: {
@@ -34,77 +34,70 @@ const config = {
             isSurgical: false,
             words: [
                 { term: "financialization", explanations: { headline: "The Casino Economy", summary: "The process of turning every aspect of the real economy (housing, food) into a speculative asset." }, flux_connections: ["Food Paradigm", "Healthcare Paradigm", "Housing"], resonance_prompt: "Where have you seen a basic human need in your community turned into a vehicle for financial speculation?" },
-                { term: "credit score", explanations: { headline: "The Digital Leash", summary: "A social control mechanism disguised as a neutral risk assessment, dictating access to shelter and resources to enforce compliance." }, flux_connections: ["Justice Paradigm", "Inequality", "Debt"], resonance_prompt: "Have you ever felt judged not as a person, but by a number you have little direct control over?" },
-                { term: "shareholder value", explanations: { headline: "The Alibi for Destruction", summary: "The specific mandate used to justify prioritizing abstract financial returns over employee well-being, ecological health, or public good." }, flux_connections: ["Work Paradigm", "Environment Paradigm", "Moral Compromise"], resonance_prompt: "Have you seen a company make a decision that was good for its stock price but bad for its employees or community?" },
-                { term: "pension", explanations: { headline: "A Retirement Bet on The Casino", summary: "A promise of future security that has been systematically financialized, forcing retirees' futures to be dependent on volatile markets." }, flux_connections: ["Financialization", "Work Paradigm", "Inequality"], resonance_prompt: "Does it feel secure to have your future well-being tied to the performance of the stock market?" },
-                { term: "mortgage", explanations: { headline: "The 30-Year Debt Servitude Contract", summary: "The primary instrument for binding individuals into long-term debt, turning shelter into a source of interest for banks." }, flux_connections: ["Debt", "Financialization", "Work Paradigm"], resonance_prompt: "How much freedom or creativity in your life has been constrained by the need to make a monthly mortgage payment?" },
-                { term: "assets", explanations: { headline: "The World, Quantified for Extraction", summary: "The language used to convert tangible reality—a forest, a home, a public utility—into a line item on a balance sheet for financial extraction." }, flux_connections: ["Financialization", "Environment Paradigm", "GDP"], resonance_prompt: "What is lost when a forest is described only as a 'timber asset'?" },
-                { term: "dividends", explanations: { headline: "The Siphon of Corporate Earnings", summary: "The specific mechanism for funneling wealth from a productive company directly to the holders of capital, often at the expense of wages." }, flux_connections: ["Inequality", "Shareholder Value", "Work Paradigm"], resonance_prompt: "When a company announces record profits and dividends but also has layoffs, where is the value flowing?" },
-                { term: "stimulus", explanations: { headline: "An Injection of New Debt", summary: "The act of creating vast new sums of debt-money to prevent a systemic collapse, often designed to inflate asset prices and benefit the wealthy." }, flux_connections: ["Debt", "Governance Paradigm", "Inequality"], resonance_prompt: "During the last 'stimulus,' did the money seem to help ordinary people or large corporations more?" }
+                { term: "inflation", explanations: { headline: "Systemic Currency Debasement", summary: "A hidden tax used to manage unpayable debt levels by devaluing the currency and eroding savings." }, flux_connections: ["Poverty as Punishment", "Retirement"], resonance_prompt: "Have your wages kept pace with the rising cost of essentials?" },
+                { term: "credit score", explanations: { headline: "The Digital Leash", summary: "A social control mechanism disguised as a neutral risk assessment, dictating access to shelter and resources to enforce compliance." }, flux_connections: ["Justice Paradigm", "Inequality", "Debt"], resonance_prompt: "Have you ever felt judged not as a person, but by this number?" },
+                { term: "shareholder value", explanations: { headline: "The Alibi for Destruction", summary: "The specific mandate used to justify prioritizing abstract financial returns over employee well-being, ecological health, or public good." }, flux_connections: ["Work Paradigm", "Environment Paradigm", "Moral Compromise"], resonance_prompt: "Have you seen a company make a decision good for its stock but bad for its community?" },
+                { term: "mortgage", explanations: { headline: "The 30-Year Debt Servitude Contract", summary: "The primary instrument for binding individuals into long-term debt, turning shelter into a source of interest for banks." }, flux_connections: ["Debt", "Financialization", "Work Paradigm"], resonance_prompt: "How much freedom in your life has been constrained by the need to make a mortgage payment?" },
+                { term: "rent", explanations: { headline: "The Subscription Fee for Shelter", summary: "The financialization of a basic human need, representing a constant wealth transfer from tenants to property owners." }, flux_connections: ["Financialization", "Inequality", "Work Paradigm"], resonance_prompt: "What percentage of your income is immediately transferred to a landlord or property owner?" },
+                { term: "loan", explanations: { headline: "The Point of Infection", summary: "The specific transaction where new debt-money is created and an individual is hooked into the system of perpetual interest payments." }, flux_connections: ["Debt", "Work Paradigm", "Education Paradigm"], resonance_prompt: "How has the need to get (or avoid) a loan shaped a major decision in your life?" }
             ]
         },
         governance_policy: {
             name: "Governance & Policy",
             isSurgical: false,
             words: [
-                { terms: ["Federal Reserve", "The Fed", "central bank"], primaryTerm: "Federal Reserve", explanations: { headline: "The Creditors' Cartel", summary: "A private banking cartel that manages the stability and profitability of the debt-based system." }, flux_connections: ["Governance Paradigm", "Debt-Money"], resonance_prompt: "Does an institution that is owned by private banks have the public's best interest as its primary goal?" },
+                { terms: ["Federal Reserve", "The Fed", "central bank"], primaryTerm: "Federal Reserve", explanations: { headline: "The Creditors' Cartel", summary: "A private banking cartel that manages the stability and profitability of the debt-based system." }, flux_connections: ["Governance Paradigm", "Debt-Money"], resonance_prompt: "Does an institution owned by private banks have the public's best interest as its primary goal?" },
                 { term: "lobbying", explanations: { headline: "Systemic Bribery", summary: "The mechanism through which concentrated wealth captures the political process to protect the system." }, flux_connections: ["Governance Paradigm", "Justice Paradigm", "Media Paradigm"], resonance_prompt: "When you see a policy that harms the public but benefits an industry, do you suspect this is at play?" },
                 { term: "technocracy", explanations: { headline: "The Rule of 'Experts'", summary: "The ideology that the system is too complex for democratic control, shielding it from debate." }, systemDefense: "The 'Appeal to Complexity' used to disempower public debate.", flux_connections: ["Education Paradigm", "Governance Paradigm"], resonance_prompt: "Have you ever felt that an issue was framed as too 'technical' for you to have a valid opinion on it?" },
-                { term: "GDP", explanations: { headline: "Gross Destruction Product", summary: "A flawed metric where pollution and prisons count as economic positives." }, flux_connections: ["Environment Paradigm", "Humanistic Paradigm"], resonance_prompt: "What important aspects of your life (family time, clean air) are treated as worthless by this metric of 'progress'?" },
                 { term: "austerity", explanations: { headline: "Punishment for the Public", summary: "The specific policy of cutting public services to ensure that government debts to the financial creditor class are paid first." }, flux_connections: ["Governance Paradigm", "Inequality", "Poverty as Punishment"], resonance_prompt: "In your community, have you seen cuts to libraries, parks, or schools justified by 'budget shortfalls'?" },
                 { term: "deregulation", explanations: { headline: "Unleashing the Financial Engine", summary: "The specific act of removing legal controls on the financial industry, allowing its extractive processes to operate with greater speed." }, flux_connections: ["Financialization", "Governance Paradigm", "Environment Paradigm"], resonance_prompt: "Can you think of a major crisis (financial, environmental) that was preceded by this?" },
-                { term: "bipartisan", explanations: { headline: "The Consensus of the Captured", summary: "A political signal that a proposal serves the core interests of the system, endorsed by both sides of the political theater to manufacture consent." }, flux_connections: ["Governance Paradigm", "Media Paradigm"], resonance_prompt: "When politicians who normally disagree suddenly agree on a major spending bill, who truly benefits?" },
                 { term: "national security", explanations: { headline: "The Ultimate Justification", summary: "A powerful term used to justify massive government debt, endless wars, and domestic surveillance." }, flux_connections: ["Peace Paradigm", "Technology Paradigm", "Governance Paradigm"], resonance_prompt: "How often is this term used to justify actions that have little to do with the actual safety of citizens?" },
-                { term: "law", explanations: { headline: "The System's Code of Conduct", summary: "The set of enforceable rules designed primarily to protect the system's core function: the sanctity of debt contracts and the rights of capital." }, flux_connections: ["Justice Paradigm", "Governance Paradigm"], resonance_prompt: "Does the legal system seem more focused on protecting property and contracts or on ensuring human well-being?" },
-                { term: "aid", explanations: { headline: "The Velvet Glove of Control", summary: "Presented as charity, but often functions as a tool for creating debt traps and dependency, without altering the underlying extractive system." }, flux_connections: ["Geopolitics Paradigm", "Governance Paradigm"], resonance_prompt: "Does international aid seem to lift countries out of poverty or trap them in cycles of debt?" }
+                { term: "law", explanations: { headline: "The System's Code of Conduct", summary: "The set of enforceable rules designed primarily to protect the system's core function: the sanctity of debt contracts and the rights of capital." }, flux_connections: ["Justice Paradigm", "Governance Paradigm"], resonance_prompt: "Does the legal system seem more focused on protecting property or on ensuring human well-being?" },
+                { term: "history", explanations: { headline: "The Narrative Written by the Victors", summary: "The official story of the past, often curated to legitimize the present power structure and omit the history of usury's rebranding as 'progress'." }, flux_connections: ["Education Paradigm", "Media Paradigm", "Historical Roots"], resonance_prompt: "Were you taught the history of money and debt as a central force in shaping world events?" },
+                { term: "censorship", explanations: { headline: "The Immune Response of the Narrative", summary: "The active suppression of information or analysis that threatens the foundational legitimacy of the system, often under the guise of 'safety'." }, flux_connections: ["Media Paradigm", "Technology Paradigm", "Governance Paradigm"], resonance_prompt: "Are conversations challenging economic power suppressed more than those challenging a political party?" }
             ]
         },
-        work_culture: {
-            name: "Work & Corporate Culture",
-            isSurgical: false,
-            words: [
-                { terms: ["jobs", "job creation"], primaryTerm: "jobs", explanations: { headline: "A Means of Debt Servitude", summary: "For many, the necessary act of selling one's time to service the debts required to live in the system." }, flux_connections: ["Work Paradigm", "Debt", "Humanistic Paradigm"], resonance_prompt: "Have you ever felt pressure to choose a job for financial security over one of personal meaning?" },
-                { term: "productivity", explanations: { headline: "The Efficiency Mandate", summary: "A metric often used to justify wage stagnation and downsizing, where the gains are captured by capital, not shared with labor." }, flux_connections: ["Work Paradigm", "Inequality", "Technology Paradigm"], resonance_prompt: "Have you worked in a place where technology increased 'productivity,' but the main result was more stress or fewer jobs?" },
-                { term: "downsizing", explanations: { headline: "The Human Cost of Shareholder Value", summary: "A corporate euphemism for firing employees to cut costs, almost always in service of short-term stock performance." }, flux_connections: ["Work Paradigm", "Shareholder Value"], resonance_prompt: "Who bears the real, long-term cost of this decision: the company's stock price or the community?" },
-                { term: "performance review", explanations: { headline: "The Ritual of the Competition Trap", summary: "A formal mechanism for ranking individuals against each other, reinforcing the Competition Trap and justifying unequal pay." }, flux_connections: ["Work Paradigm", "Society Paradigm", "Inequality"], resonance_prompt: "Have these rituals fostered genuine improvement or have they created anxiety and competition among colleagues?" },
-                { term: "human resources", explanations: { headline: "The Dehumanization of Labor", summary: "The reframing of human beings as fungible, manageable assets on a corporate balance sheet." }, flux_connections: ["Humanistic Paradigm", "Work Paradigm"], resonance_prompt: "How does it feel to be referred to as a 'resource'?" },
-                { term: "business", explanations: { headline: "The Engine's Local Agent", summary: "An entity, regardless of its owner's intent, that is forced to operate according to the rules of the Competition Trap to survive." }, flux_connections: ["Work Paradigm", "Competition Trap", "Moral Compromise"], resonance_prompt: "Have you seen a small business owner you admire have to make compromises to stay afloat?" },
-                { term: "side hustle", explanations: { headline: "The Normalization of Precarity", summary: "A modern term for the necessity of working multiple jobs to survive, presented as an empowering choice rather than a symptom of wage stagnation." }, flux_connections: ["Work Paradigm", "Inequality", "Peace Paradigm"], resonance_prompt: "Is the rise of the 'side hustle' a sign of entrepreneurial freedom or economic desperation?" },
-                { term: "supply chain", explanations: { headline: "The Debt-Fueled Global Conveyor", summary: "A network where every link is laden with its own debt, the interest on which is embedded in the final price of every product." }, flux_connections: ["Financialization", "Work Paradigm", "Environment Paradigm"], resonance_prompt: "When a product seems cheap, who or what, somewhere along this chain, is paying the hidden cost?" },
-                { term: "rat-race", explanations: { headline: "The Lived Experience of the Trap", summary: "The daily psychological grind of the Competition Trap, sacrificing time and health on an endless treadmill of work and debt." }, flux_connections: ["Competition Trap", "Work Paradigm", "Peace Paradigm"], resonance_prompt: "What would you do with your life if you could step off this treadmill tomorrow?" }
-            ]
-        },
-        societal_control: {
-            name: "Societal Narratives & Control",
+        societal_narratives: {
+            name: "Societal Narratives & Concepts",
             isSurgical: false,
             words: [
                 { term: "the economy", explanations: { headline: "The Abstraction We Serve", summary: "A concept we are told we must serve, inverting the reality that an economy should serve human well-being." }, flux_connections: ["Humanistic Paradigm", "Work Paradigm"], resonance_prompt: "How often do you hear 'it's for the good of the economy' used to justify actions that seem to harm people?" },
                 { term: "meritocracy", explanations: { headline: "The Noble Lie", summary: "The myth used to justify inequality by ignoring the system's rigged starting positions and the pull of debt." }, systemDefense: "A powerful tool for blaming the victims of the 'Competition Trap.'", flux_connections: ["Education Paradigm", "Society Paradigm", "Inequality"], resonance_prompt: "Does pure meritocracy hold up when you consider the impact of inherited wealth or crushing debt?" },
                 { term: "media", explanations: { headline: "Manufacturing Consent", summary: "A corporate-owned narrative machine that distracts and divides to protect the economic status quo." }, systemDefense: "Defended under the banner of a 'free press.'", flux_connections: ["Media Paradigm", "Governance Paradigm", "Society Paradigm"], resonance_prompt: "Does the news spend more time on divisive social issues than on the mechanics of the financial system?" },
                 { term: "conspiracy", explanations: { headline: "The Thought-Terminating Weapon", summary: "A word deployed to ridicule and dismiss any rational analysis of the system's foundational rules." }, systemDefense: "Works by conflating a critique of the *rules* with a belief about a secret cabal of *players*.", flux_connections: ["Media Paradigm", "Society Paradigm"], resonance_prompt: "Have you ever hesitated to discuss a systemic issue for fear of being labeled with this term?" },
-                { term: "scapegoat", explanations: { headline: "The Distraction Target", summary: "When system-induced pain becomes unbearable, a target is selected to absorb the public's anger, misdirecting it from the architects of the system." }, flux_connections: ["Media Paradigm", "Society Paradigm", "Justice Paradigm"], resonance_prompt: "When you see intense media focus on the supposed failings of one group, what larger issue might be being ignored?" },
-                { term: "jew", explanations: { headline: "The System's Perfect Lightning Rod", summary: "The most historically potent Scapegoat used to misdirect anger from the impersonal mechanism of usury onto a specific group of people." }, flux_connections: ["Scapegoat", "Media Paradigm", "Historical Roots"], resonance_prompt: "How does focusing on a group of people prevent us from analyzing the mathematical rules of the system itself?" },
-                { term: "war", explanations: { headline: "A Profit Center & Reset Mechanism", summary: "The most extreme expression of the Peace Paradigm's inversion. Immensely profitable, it justifies new debt and serves as a tool for resource seizure." }, flux_connections: ["Peace Paradigm", "Geopolitics Paradigm", "Debt"], resonance_prompt: "Who profits from war, and who pays the price?" },
-                { term: "bias", explanations: { headline: "The Weapon of Division", summary: "The system's Competition Trap naturally amplifies our latent biases. The Media Paradigm then weaponizes this division to prevent a unified populace." }, flux_connections: ["Society Paradigm", "Media Paradigm", "Competition Trap"], resonance_prompt: "How are we encouraged to blame each other for problems that may have a systemic root?" },
-                { term: "consumer", explanations: { headline: "The Citizen, Commodified", summary: "The reframing of a citizen as a passive economic unit whose primary social duty is to borrow and spend, fueling the mandatory growth engine." }, flux_connections: ["Humanistic Paradigm", "Work Paradigm", "Debt"], resonance_prompt: "How does it change your perspective to think of yourself as a 'citizen' rather than a 'consumer'?" },
-                { term: "student loan", explanations: { headline: "The Indenture of the Young", summary: "The specific debt instrument used to capture the next generation, ensuring they begin their working lives already deep within the Competition Trap." }, flux_connections: ["Education Paradigm", "Debt", "Work Paradigm"], resonance_prompt: "How does the prospect of decades of payments affect a student's choice of major or career path?" }
+                { terms: ["war", "conflict"], primaryTerm: "war", explanations: { headline: "A Profit Center & Reset Mechanism", summary: "The most extreme expression of the Peace Paradigm's inversion. Immensely profitable, it justifies new debt and serves as a tool for resource seizure." }, flux_connections: ["Peace Paradigm", "Geopolitics Paradigm", "Debt"], resonance_prompt: "Who profits from war, and who pays the price?" },
+                { term: "competition", explanations: { headline: "A Mandated State of Being", summary: "Presented as a natural driver of innovation, but is in fact the engineered outcome of the mathematical scarcity created by debt-money." }, flux_connections: ["Competition Trap", "Society Paradigm", "Work Paradigm"], resonance_prompt: "Does the competition in your field feel like it's creating excellence, or just anxiety?" },
+                { term: "migration", explanations: { headline: "The Movement of People, Driven by Scarcity", summary: "Often framed as a cultural issue, it is frequently a direct consequence of the Geopolitics Paradigm—where resource wars, debt traps, and ecological devastation make staying home impossible." }, flux_connections: ["Geopolitics Paradigm", "Environment Paradigm", "Society Paradigm", "Media Paradigm"], resonance_prompt: "Are people leaving their homes by choice, or are they being pushed by economic and environmental pressures?" },
+                { term: "culture", explanations: { headline: "The Operating System of the Psyche", summary: "The collection of stories and values shaped by the underlying economic system. A culture of competition and scarcity will produce art and media that reflect that reality." }, flux_connections: ["Society Paradigm", "Media Paradigm", "Humanistic Paradigm"], resonance_prompt: "How much of modern culture is about genuine human expression versus selling a product or an identity?" },
+                { terms: ["virtue", "vice"], primaryTerm: "virtue", explanations: { headline: "The Inversion of Morality", summary: "The system inverts morality. The 'vice' of usury becomes the 'virtue' of 'investment.' The virtue of cooperation is punished as inefficient, while ruthless competition is rewarded as 'ambition'." }, flux_connections: ["Moral Compromise", "Humanistic Paradigm", "Society Paradigm"], resonance_prompt: "Can you think of an action that is 'good for business' but feels ethically wrong?" }
             ]
         },
-        health_body: {
-            name: "Health, Body & Planet",
+        human_experience: {
+            name: "The Human Experience & Inner World",
             isSurgical: false,
             words: [
-                { term: "sustainability", explanations: { headline: "Sustaining the Un-sustainable", summary: "A term co-opted to mean 'making exponential growth appear green,' ignoring the impossibility of infinite growth on a finite planet." }, flux_connections: ["Environment Paradigm", "Energy Paradigm", "GDP"], resonance_prompt: "Does 'sustainable growth' sound like a logical possibility or a contradiction in terms?" },
-                { term: "bread", explanations: { headline: "The Interest Loaf", summary: "A staple food where a significant portion of its final price pays for the interest on debts accumulated throughout its entire supply chain." }, flux_connections: ["Food Paradigm", "Financialization", "Debt"], resonance_prompt: "What does it mean if even a simple loaf of bread is carrying its own burden of interest?" },
-                { term: "prescription", explanations: { headline: "The Tool of Sickness Management", summary: "The primary output of a Healthcare Paradigm that often prioritizes the profitable, long-term management of symptoms over cures." }, flux_connections: ["Healthcare Paradigm", "Financialization"], resonance_prompt: "Is our healthcare system designed for health, or is it designed to manage sickness?" },
-                { term: "self-care", explanations: { headline: "The Privatization of Well-being", summary: "The modern reframing of coping with systemic stress as an individual, consumer-based responsibility. It creates a market to treat the symptoms of a sick system." }, flux_connections: ["Healthcare Paradigm", "Humanistic Paradigm", "Society Paradigm"], resonance_prompt: "Is 'self-care' a solution to burnout, or is it a temporary patch on a systemic problem?" }
+                { terms: ["stress", "depression"], primaryTerm: "stress", explanations: { headline: "A Rational Response to an Insane System", summary: "The logical psychological state resulting from the constant precarity, competition, and meaninglessness generated by the system. A symptom of a sick environment, not a personal failing." }, flux_connections: ["Peace Paradigm (Internal)", "Work Paradigm", "Society Paradigm"], resonance_prompt: "How much of your personal stress or low mood can be traced to financial pressure or a lack of meaningful connection?" },
+                { term: "suicide", explanations: { headline: "The Ultimate Systemic Failure", summary: "The tragic endpoint of the system's pressures, where the despair from the Competition Trap, social isolation, and lack of meaning becomes unbearable." }, flux_connections: ["Humanistic Paradigm", "Peace Paradigm", "Society Paradigm", "Depression"], resonance_prompt: "When a society sees rising 'deaths of despair,' what does this signal about the health of the underlying system itself?" },
+                { terms: ["love", "friendship", "relationship"], primaryTerm: "relationship", explanations: { headline: "The Last Bastion Against Commodification", summary: "Core human bonds based on intrinsic worth, a logic directly opposed to the system's transactional and utilitarian nature." }, flux_connections: ["Love Paradigm", "Humanistic Paradigm", "Society Paradigm", "Commodification"], resonance_prompt: "Have you felt the pressure to evaluate relationships based on what you can 'get' from them?" },
+                { terms: ["home", "family"], primaryTerm: "family", explanations: { headline: "The Economic Unit", summary: "The primary source of human connection, now often strained to the breaking point by the need for dual incomes just to service debt and stay afloat in the Competition Trap." }, flux_connections: ["Humanistic Paradigm", "Work Paradigm", "Debt", "Financialization"], resonance_prompt: "How much has financial pressure impacted the time and quality of your family life?" },
+                { term: "time", explanations: { headline: "The Ultimate Finite Resource", summary: "The system's primary act of extraction is the monetization of your life-time. Your time is converted into labor to service debt, a process that is infinite, while your time is finite." }, flux_connections: ["Work Paradigm", "Debt", "Humanistic Paradigm"], resonance_prompt: "If your time was not needed to service debt, what would you spend it on?" },
+                { term: "leisure", explanations: { headline: "The Re-creation of the Worker", summary: "In the system, leisure is not true rest or play, but the scheduled time needed to recover just enough energy to return to the Work Paradigm. It too becomes a market for consumption." }, flux_connections: ["Work Paradigm", "Peace Paradigm", "Humanistic Paradigm"], resonance_prompt: "Does your 'time off' feel like genuine freedom, or just a brief pause to recharge for more work?" }
             ]
         },
-        technology_amplifiers: {
-            name: "Technology & Amplifiers",
+        physical_world: {
+            name: "Physical World, Health & Tech",
             isSurgical: false,
             words: [
-                { term: "algorithm", explanations: { headline: "The New Engine of Control", summary: "Presented as a neutral tool, it is deployed to make the system's mechanisms of control more efficient: algorithmic censorship, predictive policing, and work automation." }, flux_connections: ["Technology Paradigm", "Media Paradigm", "Justice Paradigm"], resonance_prompt: "Who writes the rules for the algorithms that curate your reality? What are their goals?" }
+                { term: "healthcare", explanations: { headline: "The Sickness Industry", summary: "A system financialized to profit from managing sickness rather than creating wellness. The profitable backstop for the illnesses created by the Food and Work Paradigms." }, flux_connections: ["Healthcare Paradigm", "Financialization", "Food Paradigm", "Work Paradigm"], resonance_prompt: "Have you felt like a 'customer' rather than a patient being healed within the healthcare system?" },
+                { term: "education", explanations: { headline: "The Compliance Onboarding System", summary: "The core function of the modern Education Paradigm is to prepare individuals for their role in the system: as indebted, compliant workers, not as liberated, critical thinkers." }, flux_connections: ["Education Paradigm", "Debt (Student Loans)", "Work Paradigm"], resonance_prompt: "Did your education teach you how the money system works, or did it primarily prepare you to get a job and take on debt?" },
+                { term: "research", explanations: { headline: "The Compass of Profit", summary: "Within the Science & Research Paradigm, funding is overwhelmingly directed toward what is patentable and profitable, not necessarily what is most beneficial for humanity." }, flux_connections: ["Science & Research Paradigm", "Healthcare Paradigm", "Technology Paradigm"], resonance_prompt: "Why is there more research for a new profitable drug than for a non-patentable preventative health strategy?" },
+                { term: "innovation", explanations: { headline: "Progress in Service of the Engine", summary: "A term implying pure human progress, but systemically channeled toward creating more efficient methods of profit extraction, surveillance, and consumerism." }, flux_connections: ["Technology Paradigm", "Financialization", "Work Paradigm"], resonance_prompt: "Does the 'innovation' you see seem to make life more meaningful, or just more monitored?" },
+                { term: "city", explanations: { headline: "The System's Pressure Cooker", summary: "An environment where the system's logic is hyper-concentrated: high cost of living (rent), intense job competition, and social anonymity, maximizing economic activity and human stress." }, flux_connections: ["Work Paradigm", "Financialization", "Society Paradigm", "Environment Paradigm"], resonance_prompt: "How does the pace and cost of city life affect your sense of community and well-being?" },
+                { term: "car", explanations: { headline: "The Debt-Fueled Isolation Chamber", summary: "A technology that promises freedom but often delivers debt, pollution, and urban design that atomizes communities." }, flux_connections: ["Technology Paradigm", "Debt", "Energy Paradigm", "Environment Paradigm"], resonance_prompt: "How much of your city's design and personal budget is dedicated to this single machine?" },
+                { term: "pollution", explanations: { headline: "The Externalized Cost of Growth", summary: "The physical waste product of the mandatory growth engine. The system's logic demands that the costs are socialized (borne by the public) while the profits are privatized." }, flux_connections: ["Environment Paradigm", "Energy Paradigm", "GDP", "Health Paradigm"], resonance_prompt: "Who profits from the activities that pollute your local environment, and who pays the price in health?" },
+                { terms: ["library", "book"], primaryTerm: "library", explanations: { headline: "The Uncommodified Archive", summary: "A Library represents a threat to the system's logic: a commons where knowledge (Book) is shared based on citizenship, not ability to pay. Its chronic underfunding is predictable." }, flux_connections: ["Commons", "Education Paradigm", "Commodification"], resonance_prompt: "What is the difference in the 'logic' of a library versus a bookstore or a subscription service?" },
+                { terms: ["AI", "algorithm"], primaryTerm: "AI", explanations: { headline: "The New Engine of Opaque Control", summary: "Presented as neutral, AI is deployed to automate and accelerate the system's logic with no transparency: algorithmic censorship, predictive policing, and workforce automation." }, flux_connections: ["Technology Paradigm", "Media Paradigm", "Justice Paradigm", "Work Paradigm"], resonance_prompt: "Who writes the rules for the algorithms that curate your reality? What are their goals?" },
+                { term: "study", explanations: { headline: "The Act of Forging a Lens", summary: "The personal effort to look past the official narrative and understand the foundational rules of the system. A necessary act of intellectual self-defense." }, flux_connections: ["Education Paradigm (Counter-act)", "Media Paradigm (Counter-act)"], resonance_prompt: "How has actively studying this framework changed the way you see the world?" }
             ]
         }
     }
@@ -120,12 +113,12 @@ for (const categoryKey in config.dictionary) {
 }
 
 function main() {
-    if (document.getElementById('usurpia-panel-v3-2')) {
-        document.getElementById('usurpia-panel-v3-2').remove();
+    if (document.getElementById('usurpia-panel-v3-3')) {
+        document.getElementById('usurpia-panel-v3-3').remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.2 (First Occurrence) Activated.");
+    console.log("Usurpia Lens v3.3 (Massive Lexicon Expansion) Activated.");
     injectStyles();
     createControlPanel();
     const popup = createPopup();
@@ -150,7 +143,7 @@ function cleanupHighlights() {
             parent.normalize();
         }
     });
-    const scrollbar = document.getElementById('usurpia-scrollbar-v3-2');
+    const scrollbar = document.getElementById('usurpia-scrollbar-v3-3');
     if (scrollbar) scrollbar.remove();
 }
 
@@ -169,10 +162,10 @@ function highlightKeywords() {
     const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
     const maxHighlights = config.settings.densityLevels[state.density];
     let highlightCount = 0;
-    const alreadyHighlightedTerms = new Set(); // <<< The new tracker for unique terms
+    const alreadyHighlightedTerms = new Set();
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-2, #usurpia-panel-v3-2')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-3, #usurpia-panel-v3-3')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
     });
 
     let nodesToProcess = [];
@@ -192,8 +185,8 @@ function highlightKeywords() {
             const matchedText = match[0];
             const entry = activeTermEntries.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === matchedText.toLowerCase()));
 
-            if (entry && !alreadyHighlightedTerms.has(entry.primaryTerm)) { // <<< The crucial check
-                alreadyHighlightedTerms.add(entry.primaryTerm); // <<< Mark this term as highlighted
+            if (entry && !alreadyHighlightedTerms.has(entry.primaryTerm)) {
+                alreadyHighlightedTerms.add(entry.primaryTerm);
 
                 const offset = match.index;
                 if (lastIndex !== offset) fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, offset)));
@@ -216,35 +209,35 @@ function highlightKeywords() {
 }
 
 function injectStyles() {
-    let style = document.getElementById('usurpia-styles-v3-2');
+    let style = document.getElementById('usurpia-styles-v3-3');
     if (style) return;
     style = document.createElement('style');
-    style.id = 'usurpia-styles-v3-2';
+    style.id = 'usurpia-styles-v3-3';
     style.innerHTML = `
         .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
-        #usurpia-popup-v3-2 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-        #usurpia-popup-v3-2 p { margin: 0 0 12px 0; padding: 0; }
-        #usurpia-popup-v3-2 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-2 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
-        #usurpia-popup-v3-2 .usurpia-defense strong { color: #c0392b; }
-        #usurpia-popup-v3-2 .usurpia-flux strong { color: #2980b9; }
-        #usurpia-popup-v3-2 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
-        #usurpia-popup-v3-2 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
-        #usurpia-popup-v3-2 .usurpia-resonance strong { color: #8e44ad; }
-        #usurpia-popup-v3-2 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-2 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
-        #usurpia-popup-v3-2 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
-        #usurpia-panel-v3-2 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
-        #usurpia-panel-v3-2-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-        #usurpia-panel-v3-2 .usurpia-control-group { margin-top: 12px; }
-        #usurpia-panel-v3-2 label { display: block; margin-bottom: 6px; font-weight: bold; }
-        #usurpia-panel-v3-2 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-        #usurpia-panel-v3-2 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-        #usurpia-panel-v3-2 .usurpia-density-control { display: flex; }
-        #usurpia-panel-v3-2 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-        #usurpia-panel-v3-2 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-        #usurpia-panel-v3-2 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
-        #usurpia-scrollbar-v3-2 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+        #usurpia-popup-v3-3 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+        #usurpia-popup-v3-3 p { margin: 0 0 12px 0; padding: 0; }
+        #usurpia-popup-v3-3 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-3 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
+        #usurpia-popup-v3-3 .usurpia-defense strong { color: #c0392b; }
+        #usurpia-popup-v3-3 .usurpia-flux strong { color: #2980b9; }
+        #usurpia-popup-v3-3 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
+        #usurpia-popup-v3-3 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
+        #usurpia-popup-v3-3 .usurpia-resonance strong { color: #8e44ad; }
+        #usurpia-popup-v3-3 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-3 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
+        #usurpia-popup-v3-3 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+        #usurpia-panel-v3-3 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+        #usurpia-panel-v3-3-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+        #usurpia-panel-v3-3 .usurpia-control-group { margin-top: 12px; }
+        #usurpia-panel-v3-3 label { display: block; margin-bottom: 6px; font-weight: bold; }
+        #usurpia-panel-v3-3 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+        #usurpia-panel-v3-3 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+        #usurpia-panel-v3-3 .usurpia-density-control { display: flex; }
+        #usurpia-panel-v3-3 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+        #usurpia-panel-v3-3 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+        #usurpia-panel-v3-3 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+        #usurpia-scrollbar-v3-3 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
         .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
     `;
     document.head.appendChild(style);
@@ -252,9 +245,9 @@ function injectStyles() {
 
 function createControlPanel() {
     const panel = document.createElement('div');
-    panel.id = 'usurpia-panel-v3-2';
+    panel.id = 'usurpia-panel-v3-3';
     panel.innerHTML = `
-        <div id="usurpia-panel-v3-2-header">Usurpia Lens v3.2</div>
+        <div id="usurpia-panel-v3-3-header">Usurpia Lens v3.3</div>
         <div class="usurpia-toggle-switch">
             <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
             <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -309,7 +302,7 @@ function setupPanelEventListeners(panel) {
 
 function createPopup() {
     let popup = document.createElement('div');
-    popup.id = 'usurpia-popup-v3-2';
+    popup.id = 'usurpia-popup-v3-3';
     document.body.appendChild(popup);
     return popup;
 }
@@ -354,7 +347,7 @@ function setupPopupEventListeners(popup) {
 
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = document.getElementById('usurpia-panel-v3-2-header');
+    const header = document.getElementById('usurpia-panel-v3-3-header');
     if (header) header.onmousedown = dragMouseDown;
     function dragMouseDown(e) { 
         e = e || window.event; e.preventDefault(); 
@@ -375,7 +368,7 @@ function makeDraggable(element) {
 
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
-    scrollbar.id = 'usurpia-scrollbar-v3-2';
+    scrollbar.id = 'usurpia-scrollbar-v3-3';
     document.body.appendChild(scrollbar);
     const highlights = document.querySelectorAll('.usurpia-highlight');
     if (highlights.length === 0) return;
@@ -390,7 +383,7 @@ function createScrollbarMarks() {
         mark.title = `Jump to "${highlight.textContent}"`;
         mark.addEventListener('click', () => { highlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
         scrollbar.appendChild(mark);
-});
+    });
 }
 
 function positionPopup(event, popup) {
