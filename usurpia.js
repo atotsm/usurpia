@@ -1,8 +1,8 @@
+
 javascript:(function() {
 
-    // Usurpia Lens v2.8 - The Definitive Engine
-    // This version implements a true priority system for "Surgical" mode, restores all UI functionality and pathway links,
-    // and integrates all features into a stable, final build.
+    // Usurpia Lens v2.8 (Drag-Fixed)
+    // Corrects the control panel resizing bug during drag operations. No other changes have been made.
 
     // --- CONFIGURATION & DICTIONARY ---
     const config = {
@@ -67,7 +67,7 @@ javascript:(function() {
             cleanupHighlights();
             return;
         }
-        console.log("Usurpia Lens v2.8 Activated.");
+        console.log("Usurpia Lens v2.8 (Drag-Fixed) Activated.");
         injectStyles();
         createControlPanel();
         const popup = createPopup();
@@ -283,9 +283,33 @@ javascript:(function() {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         const header = document.getElementById('usurpia-panel-v2-8-header');
         if (header) header.onmousedown = dragMouseDown;
-        function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
-        function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
-        function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
+        function dragMouseDown(e) { 
+            e = e || window.event; 
+            e.preventDefault(); 
+            pos3 = e.clientX; 
+            pos4 = e.clientY;
+            // *** THE FIX IS HERE ***
+            // Prevent conflict by setting top/bottom to auto before calculating new position
+            element.style.top = `${element.offsetTop}px`;
+            element.style.bottom = 'auto';
+            // ************************
+            document.onmouseup = closeDragElement; 
+            document.onmousemove = elementDrag; 
+        }
+        function elementDrag(e) { 
+            e = e || window.event; 
+            e.preventDefault(); 
+            pos1 = pos3 - e.clientX; 
+            pos2 = pos4 - e.clientY; 
+            pos3 = e.clientX; 
+            pos4 = e.clientY; 
+            element.style.top = (element.offsetTop - pos2) + "px"; 
+            element.style.left = (element.offsetLeft - pos1) + "px"; 
+        }
+        function closeDragElement() { 
+            document.onmouseup = null; 
+            document.onmousemove = null; 
+        }
     }
     
     function createScrollbarMarks() {
