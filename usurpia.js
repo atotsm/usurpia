@@ -1,18 +1,12 @@
 javascript:(function() {
 
-    // Usurpia Lens v2.6 - The Guided Analysis Engine
-    // This instrument is designed to be a pedagogical tool, guiding the user
-    // through the framework's logic and equipping them with intellectual self-defense.
+    // Usurpia Lens v2.6 (Corrected) - The Guided Analysis Engine
+    // This version fixes critical bugs related to highlighting and restores the scrollbar feature.
 
     // --- CONFIGURATION & DICTIONARY ---
     const config = {
         settings: {
-            // The default density is 'standard', mapping to 15 highlights.
-            densityLevels: {
-                surgical: 5,
-                standard: 15,
-                deepscan: 50
-            }
+            densityLevels: { surgical: 7, standard: 15, deepscan: 50 }
         },
         dictionary: {
             core: {
@@ -51,7 +45,7 @@ javascript:(function() {
                 ]
             },
             personal: {
-                name: "Lived Experience", // Merged with societal for Mode 3
+                name: "Lived Experience",
                 words: [
                     { term: "anxiety", explanations: { headline: "A Rational Response", summary: "The logical psychological state that results from living in a system of constant precarity, mandated competition, and information overload. It is a symptom of the environment, not a personal failing." } },
                     { term: "family", explanations: { headline: "The Over-Stressed Economic Unit", summary: "A primary source of love and connection, now constantly strained by the need for multiple incomes just to service debt, pay for housing, and stay afloat in the 'Competition Trap'." } },
@@ -63,50 +57,34 @@ javascript:(function() {
         }
     };
 
-    // --- APPLICATION STATE ---
-    const state = {
-        isLensActive: true,
-        analysisMode: 'mode1',
-        isDialecticActive: false,
-        density: 'standard'
-    };
-    
-    // --- DATA PREPARATION ---
+    const state = { isLensActive: true, analysisMode: 'mode1', isDialecticActive: false, density: 'standard' };
     let flatDictionary = [];
-    let termToCategoryMap = {};
     for (const categoryKey in config.dictionary) {
-        const category = config.dictionary[categoryKey];
-        category.words.forEach(item => {
-            const primaryTerm = item.primaryTerm || item.term;
-            const terms = item.terms || [item.term];
-            const enrichedItem = { ...item, primaryTerm, category: categoryKey };
-            flatDictionary.push(enrichedItem);
-            terms.forEach(t => termToCategoryMap[t.toLowerCase()] = categoryKey);
+        config.dictionary[categoryKey].words.forEach(item => {
+            flatDictionary.push({ ...item, primaryTerm: item.primaryTerm || item.term, category: categoryKey });
         });
     }
 
-    // --- CORE LOGIC ---
     function main() {
-        if (document.getElementById('usurpia-panel-v2-6')) {
-            const panel = document.getElementById('usurpia-panel-v2-6');
+        if (document.getElementById('usurpia-panel-v2-6c')) {
+            const panel = document.getElementById('usurpia-panel-v2-6c');
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
             return;
         }
-        console.log("Usurpia Lens v2.6 Activated.");
+        console.log("Usurpia Lens v2.6 (Corrected) Activated.");
         injectStyles();
-        const popup = createPopup();
         createControlPanel();
+        const popup = createPopup();
         setupPopupEventListeners(popup);
         runAnalysis();
     }
 
     function runAnalysis() {
-        if (!state.isLensActive) {
-            cleanupHighlights();
-            return;
-        }
         cleanupHighlights();
-        highlightKeywords();
+        if (state.isLensActive) {
+            highlightKeywords();
+            createScrollbarMarks();
+        }
     }
 
     function cleanupHighlights() {
@@ -118,39 +96,44 @@ javascript:(function() {
                 parent.normalize();
             }
         });
+        const scrollbar = document.getElementById('usurpia-scrollbar-v2-6c');
+        if (scrollbar) scrollbar.remove();
     }
 
     function injectStyles() {
-        let style = document.getElementById('usurpia-styles-v2-6');
+        let style = document.getElementById('usurpia-styles-v2-6c');
         if (style) return;
         style = document.createElement('style');
-        style.id = 'usurpia-styles-v2-6';
+        style.id = 'usurpia-styles-v2-6c';
         style.innerHTML = `
-            .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; font-weight: normal; font-style: normal; }
-            #usurpia-popup-v2-6 { position: fixed; display: none; width: 300px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-            #usurpia-popup-v2-6 p { margin: 0 0 12px 0; padding: 0; }
-            #usurpia-popup-v2-6 .usurpia-defense { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; font-size: 13px; color: #444; }
-            #usurpia-popup-v2-6 .usurpia-defense strong { color: #c0392b; }
-            #usurpia-panel-v2-6 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
-            #usurpia-panel-v2-6-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-            #usurpia-panel-v2-6 .usurpia-control-group { margin-top: 12px; }
-            #usurpia-panel-v2-6 label { display: block; margin-bottom: 6px; font-weight: bold; }
-            #usurpia-panel-v2-6 select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ced4da; }
-            #usurpia-panel-v2-6 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-            #usurpia-panel-v2-6 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-            #usurpia-panel-v2-6 .usurpia-density-control { display: flex; }
-            #usurpia-panel-v2-6 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-            #usurpia-panel-v2-6 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-            #usurpia-panel-v2-6 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+            .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
+            #usurpia-popup-v2-6c { position: fixed; display: none; width: 300px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+            #usurpia-popup-v2-6c p { margin: 0 0 12px 0; padding: 0; }
+            #usurpia-popup-v2-6c .usurpia-defense { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; font-size: 13px; color: #444; }
+            #usurpia-popup-v2-6c .usurpia-defense strong { color: #c0392b; }
+            #usurpia-panel-v2-6c { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+            #usurpia-panel-v2-6c-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+            #usurpia-panel-v2-6c .usurpia-control-group { margin-top: 12px; }
+            #usurpia-panel-v2-6c label { display: block; margin-bottom: 6px; font-weight: bold; }
+            #usurpia-panel-v2-6c select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ced4da; }
+            #usurpia-panel-v2-6c .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+            #usurpia-panel-v2-6c .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+            #usurpia-panel-v2-6c .usurpia-density-control { display: flex; }
+            #usurpia-panel-v2-6c .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+            #usurpia-panel-v2-6c .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+            #usurpia-panel-v2-6c .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+            #usurpia-scrollbar-v2-6c { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+            .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
+            .usurpia-scrollbar-mark:hover { opacity: 1; }
         `;
         document.head.appendChild(style);
     }
 
     function createControlPanel() {
         const panel = document.createElement('div');
-        panel.id = 'usurpia-panel-v2-6';
+        panel.id = 'usurpia-panel-v2-6c';
         panel.innerHTML = `
-            <div id="usurpia-panel-v2-6-header">Usurpia Lens v2.6</div>
+            <div id="usurpia-panel-v2-6c-header">Usurpia Lens v2.6</div>
             <div class="usurpia-toggle-switch">
                 <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
                 <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -185,17 +168,9 @@ javascript:(function() {
     }
     
     function setupPanelEventListeners(panel) {
-        document.getElementById('usurpia-master-toggle').addEventListener('change', (e) => {
-            state.isLensActive = e.target.checked;
-            runAnalysis();
-        });
-        document.getElementById('usurpia-analysis-mode').addEventListener('change', (e) => {
-            state.analysisMode = e.target.value;
-            runAnalysis();
-        });
-        document.getElementById('usurpia-dialectic-mode').addEventListener('change', (e) => {
-            state.isDialecticActive = e.target.checked;
-        });
+        document.getElementById('usurpia-master-toggle').addEventListener('change', (e) => { state.isLensActive = e.target.checked; runAnalysis(); });
+        document.getElementById('usurpia-analysis-mode').addEventListener('change', (e) => { state.analysisMode = e.target.value; runAnalysis(); });
+        document.getElementById('usurpia-dialectic-mode').addEventListener('change', (e) => { state.isDialecticActive = e.target.checked; });
         panel.querySelector('.usurpia-density-control').addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
                 panel.querySelector('.usurpia-density-control .active').classList.remove('active');
@@ -208,33 +183,18 @@ javascript:(function() {
 
     function makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const header = document.getElementById('usurpia-panel-v2-6-header');
-        header.onmousedown = dragMouseDown;
-        function dragMouseDown(e) {
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
+        const header = document.getElementById('usurpia-panel-v2-6c-header');
+        if (header) {
+            header.onmousedown = dragMouseDown;
         }
-        function elementDrag(e) {
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
-        }
-        function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
+        function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
+        function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
+        function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
     }
 
     function createPopup() {
         let popup = document.createElement('div');
-        popup.id = 'usurpia-popup-v2-6';
+        popup.id = 'usurpia-popup-v2-6c';
         document.body.appendChild(popup);
         return popup;
     }
@@ -251,59 +211,82 @@ javascript:(function() {
 
     function highlightKeywords() {
         const activeCategories = getActiveCategories();
-        const activeTerms = flatDictionary
-            .filter(item => activeCategories.includes(item.category))
-            .flatMap(d => d.terms || [d.term]);
+        const activeTermEntries = flatDictionary.filter(item => activeCategories.includes(item.category));
+        const sortedTermEntries = activeTermEntries.sort((a, b) => (b.primaryTerm || b.term).length - (a.primaryTerm || a.term).length);
+        
+        const allTerms = sortedTermEntries.flatMap(d => d.terms || [d.term]);
+        if (allTerms.length === 0) return;
 
-        if (activeTerms.length === 0) return;
-        
+        const masterRegex = new RegExp(allTerms.map(t => t.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'), 'gi');
         const maxHighlights = config.settings.densityLevels[state.density];
-        const masterRegex = new RegExp(`\\b(${activeTerms.join('|')})\\b`, 'gi');
-        
+        let highlightCount = 0;
+
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-            acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, .usurpia-highlight, #usurpia-popup-v2-6, #usurpia-panel-v2-6')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, .usurpia-highlight, #usurpia-popup-v2-6c, #usurpia-panel-v2-6c')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
         });
 
-        let candidates = [];
-        while (walker.nextNode()) {
-            const node = walker.currentNode;
-            const matches = [...node.nodeValue.matchAll(masterRegex)];
-            matches.forEach(match => candidates.push({ node, match: match[0], offset: match.index }));
-        }
+        let nodesToProcess = [];
+        while(walker.nextNode()) nodesToProcess.push(walker.currentNode);
 
-        let highlightsToPerform = candidates;
-        if (candidates.length > maxHighlights) {
-            for (let i = candidates.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-            }
-            highlightsToPerform = candidates.slice(0, maxHighlights);
-        }
+        for (const node of nodesToProcess) {
+            if (highlightCount >= maxHighlights) break;
+            if (!masterRegex.test(node.nodeValue)) continue;
 
-        const groupedByNode = highlightsToPerform.reduce((acc, {node, match, offset}) => {
-            const key = [...document.getElementsByTagName('*')].indexOf(node.parentElement);
-            if (!acc[key]) acc[key] = { node: node, matches: [] };
-            acc[key].matches.push({ match, offset });
-            return acc;
-        }, {});
-        
-        Object.values(groupedByNode).forEach(({node, matches}) => {
-            matches.sort((a,b) => b.offset - a.offset);
-            matches.forEach(({match, offset}) => {
-                const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t)));
-                if (entry) {
-                    const span = document.createElement('span');
-                    span.className = 'usurpia-highlight';
-                    span.setAttribute('data-term', entry.primaryTerm);
-                    span.textContent = match;
-                    
-                    const range = document.createRange();
-                    range.setStart(node, offset);
-                    range.setEnd(node, offset + match.length);
-                    range.deleteContents();
-                    range.insertNode(span);
+            const fragment = document.createDocumentFragment();
+            let lastIndex = 0;
+            node.nodeValue.replace(masterRegex, (match, offset) => {
+                if (highlightCount >= maxHighlights) return;
+                
+                const wordBoundaryBefore = offset === 0 || /[\s.,;!?"'()]/.test(node.nodeValue[offset - 1]);
+                const wordBoundaryAfter = (offset + match.length) === node.nodeValue.length || /[\s.,;!?"'()]/.test(node.nodeValue[offset + match.length]);
+                
+                if (wordBoundaryBefore && wordBoundaryAfter) {
+                    const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === match.toLowerCase()));
+                    if (entry) {
+                        if (lastIndex !== offset) {
+                            fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, offset)));
+                        }
+                        const span = document.createElement('span');
+                        span.className = 'usurpia-highlight';
+                        span.setAttribute('data-term', entry.primaryTerm);
+                        span.textContent = match;
+                        fragment.appendChild(span);
+                        lastIndex = offset + match.length;
+                        highlightCount++;
+                    }
                 }
             });
+
+            if (lastIndex > 0) {
+                if (lastIndex < node.nodeValue.length) {
+                    fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex)));
+                }
+                node.parentNode.replaceChild(fragment, node);
+            }
+        }
+    }
+    
+    function createScrollbarMarks() {
+        const scrollbar = document.createElement('div');
+        scrollbar.id = 'usurpia-scrollbar-v2-6c';
+        document.body.appendChild(scrollbar);
+
+        const highlights = document.querySelectorAll('.usurpia-highlight');
+        if (highlights.length === 0) return;
+
+        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        
+        highlights.forEach(highlight => {
+            const rect = highlight.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const relativePosition = ((rect.top + scrollTop) / docHeight) * 100;
+
+            const mark = document.createElement('div');
+            mark.className = 'usurpia-scrollbar-mark';
+            mark.style.top = `${relativePosition}%`;
+            mark.title = `Jump to "${highlight.textContent}"`;
+            mark.addEventListener('click', () => { highlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+            scrollbar.appendChild(mark);
         });
     }
 
@@ -325,18 +308,14 @@ javascript:(function() {
                 }
             }
         });
-        document.body.addEventListener('mouseout', e => {
-            if (e.target.classList.contains('usurpia-highlight')) {
-                hideTimer = setTimeout(() => { popup.style.display = 'none'; }, 200);
-            }
-        });
+        document.body.addEventListener('mouseout', e => { if (e.target.classList.contains('usurpia-highlight')) { hideTimer = setTimeout(() => { popup.style.display = 'none'; }, 200); }});
         popup.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
         popup.addEventListener('mouseleave', () => { popup.style.display = 'none'; });
     }
 
     function positionPopup(event, popup) {
-        let x = event.clientX + 15; let y = event.clientY + 15;
-        const popupWidth = popup.offsetWidth; const popupHeight = popup.offsetHeight;
+        let x = event.clientX + 15, y = event.clientY + 15;
+        const popupWidth = popup.offsetWidth, popupHeight = popup.offsetHeight;
         if (x + popupWidth > window.innerWidth) x = event.clientX - popupWidth - 15;
         if (y + popupHeight > window.innerHeight) y = event.clientY - popupHeight - 15;
         popup.style.left = `${x}px`;
