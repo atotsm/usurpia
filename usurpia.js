@@ -1,8 +1,8 @@
 javascript:(function() {
-// Usurpia Lens v3.1 (Lexicon Expansion)
-// This version significantly expands the dictionary with over 20 new, specific terms.
-// The goal is to increase the "hit rate" on a wider variety of texts, from financial news to lifestyle blogs,
-// by recognizing the system's more subtle operational jargon. The core functionality of v3.0 remains.
+// Usurpia Lens v3.2 (First Occurrence)
+// This version introduces a key usability enhancement: "first-occurrence-only" highlighting.
+// The script now tracks which terms have been highlighted and will only mark the first instance
+// of each unique term, reducing clutter and increasing the analytical impact of each highlight.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -120,12 +120,12 @@ for (const categoryKey in config.dictionary) {
 }
 
 function main() {
-    if (document.getElementById('usurpia-panel-v3-1')) {
-        document.getElementById('usurpia-panel-v3-1').remove();
+    if (document.getElementById('usurpia-panel-v3-2')) {
+        document.getElementById('usurpia-panel-v3-2').remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.1 (Lexicon Expansion) Activated.");
+    console.log("Usurpia Lens v3.2 (First Occurrence) Activated.");
     injectStyles();
     createControlPanel();
     const popup = createPopup();
@@ -150,7 +150,7 @@ function cleanupHighlights() {
             parent.normalize();
         }
     });
-    const scrollbar = document.getElementById('usurpia-scrollbar-v3-1');
+    const scrollbar = document.getElementById('usurpia-scrollbar-v3-2');
     if (scrollbar) scrollbar.remove();
 }
 
@@ -169,9 +169,10 @@ function highlightKeywords() {
     const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
     const maxHighlights = config.settings.densityLevels[state.density];
     let highlightCount = 0;
+    const alreadyHighlightedTerms = new Set(); // <<< The new tracker for unique terms
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-1, #usurpia-panel-v3-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-2, #usurpia-panel-v3-2')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
     });
 
     let nodesToProcess = [];
@@ -189,16 +190,20 @@ function highlightKeywords() {
             if (highlightCount >= maxHighlights) break;
             
             const matchedText = match[0];
-            const offset = match.index;
             const entry = activeTermEntries.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === matchedText.toLowerCase()));
 
-            if(entry) {
+            if (entry && !alreadyHighlightedTerms.has(entry.primaryTerm)) { // <<< The crucial check
+                alreadyHighlightedTerms.add(entry.primaryTerm); // <<< Mark this term as highlighted
+
+                const offset = match.index;
                 if (lastIndex !== offset) fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, offset)));
+                
                 const span = document.createElement('span');
                 span.className = 'usurpia-highlight';
                 span.setAttribute('data-term', entry.primaryTerm);
                 span.textContent = matchedText;
                 fragment.appendChild(span);
+                
                 lastIndex = offset + matchedText.length;
                 highlightCount++;
             }
@@ -211,35 +216,35 @@ function highlightKeywords() {
 }
 
 function injectStyles() {
-    let style = document.getElementById('usurpia-styles-v3-1');
+    let style = document.getElementById('usurpia-styles-v3-2');
     if (style) return;
     style = document.createElement('style');
-    style.id = 'usurpia-styles-v3-1';
+    style.id = 'usurpia-styles-v3-2';
     style.innerHTML = `
         .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
-        #usurpia-popup-v3-1 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-        #usurpia-popup-v3-1 p { margin: 0 0 12px 0; padding: 0; }
-        #usurpia-popup-v3-1 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-1 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
-        #usurpia-popup-v3-1 .usurpia-defense strong { color: #c0392b; }
-        #usurpia-popup-v3-1 .usurpia-flux strong { color: #2980b9; }
-        #usurpia-popup-v3-1 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
-        #usurpia-popup-v3-1 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
-        #usurpia-popup-v3-1 .usurpia-resonance strong { color: #8e44ad; }
-        #usurpia-popup-v3-1 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-1 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
-        #usurpia-popup-v3-1 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
-        #usurpia-panel-v3-1 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
-        #usurpia-panel-v3-1-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-        #usurpia-panel-v3-1 .usurpia-control-group { margin-top: 12px; }
-        #usurpia-panel-v3-1 label { display: block; margin-bottom: 6px; font-weight: bold; }
-        #usurpia-panel-v3-1 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-        #usurpia-panel-v3-1 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-        #usurpia-panel-v3-1 .usurpia-density-control { display: flex; }
-        #usurpia-panel-v3-1 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-        #usurpia-panel-v3-1 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-        #usurpia-panel-v3-1 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
-        #usurpia-scrollbar-v3-1 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+        #usurpia-popup-v3-2 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+        #usurpia-popup-v3-2 p { margin: 0 0 12px 0; padding: 0; }
+        #usurpia-popup-v3-2 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-2 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
+        #usurpia-popup-v3-2 .usurpia-defense strong { color: #c0392b; }
+        #usurpia-popup-v3-2 .usurpia-flux strong { color: #2980b9; }
+        #usurpia-popup-v3-2 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
+        #usurpia-popup-v3-2 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
+        #usurpia-popup-v3-2 .usurpia-resonance strong { color: #8e44ad; }
+        #usurpia-popup-v3-2 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-2 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
+        #usurpia-popup-v3-2 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+        #usurpia-panel-v3-2 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+        #usurpia-panel-v3-2-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+        #usurpia-panel-v3-2 .usurpia-control-group { margin-top: 12px; }
+        #usurpia-panel-v3-2 label { display: block; margin-bottom: 6px; font-weight: bold; }
+        #usurpia-panel-v3-2 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+        #usurpia-panel-v3-2 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+        #usurpia-panel-v3-2 .usurpia-density-control { display: flex; }
+        #usurpia-panel-v3-2 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+        #usurpia-panel-v3-2 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+        #usurpia-panel-v3-2 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+        #usurpia-scrollbar-v3-2 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
         .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
     `;
     document.head.appendChild(style);
@@ -247,9 +252,9 @@ function injectStyles() {
 
 function createControlPanel() {
     const panel = document.createElement('div');
-    panel.id = 'usurpia-panel-v3-1';
+    panel.id = 'usurpia-panel-v3-2';
     panel.innerHTML = `
-        <div id="usurpia-panel-v3-1-header">Usurpia Lens v3.1</div>
+        <div id="usurpia-panel-v3-2-header">Usurpia Lens v3.2</div>
         <div class="usurpia-toggle-switch">
             <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
             <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -258,8 +263,8 @@ function createControlPanel() {
             <label>Density</label>
             <div class="usurpia-density-control">
                 <button data-density="surgical" title="Highlights only Core Engine terms.">Surgical</button>
-                <button data-density="standard" class="active" title="A balanced scan for all defined terms.">Standard</button>
-                <button data-density="deepscan" title="An extensive scan for all defined terms.">Deep Scan</button>
+                <button data-density="standard" class="active" title="A balanced scan for unique terms.">Standard</button>
+                <button data-density="deepscan" title="An extensive scan for unique terms.">Deep Scan</button>
             </div>
         </div>
         <div class="usurpia-control-group">
@@ -304,7 +309,7 @@ function setupPanelEventListeners(panel) {
 
 function createPopup() {
     let popup = document.createElement('div');
-    popup.id = 'usurpia-popup-v3-1';
+    popup.id = 'usurpia-popup-v3-2';
     document.body.appendChild(popup);
     return popup;
 }
@@ -349,7 +354,7 @@ function setupPopupEventListeners(popup) {
 
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = document.getElementById('usurpia-panel-v3-1-header');
+    const header = document.getElementById('usurpia-panel-v3-2-header');
     if (header) header.onmousedown = dragMouseDown;
     function dragMouseDown(e) { 
         e = e || window.event; e.preventDefault(); 
@@ -370,7 +375,7 @@ function makeDraggable(element) {
 
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
-    scrollbar.id = 'usurpia-scrollbar-v3-1';
+    scrollbar.id = 'usurpia-scrollbar-v3-2';
     document.body.appendChild(scrollbar);
     const highlights = document.querySelectorAll('.usurpia-highlight');
     if (highlights.length === 0) return;
@@ -385,7 +390,7 @@ function createScrollbarMarks() {
         mark.title = `Jump to "${highlight.textContent}"`;
         mark.addEventListener('click', () => { highlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
         scrollbar.appendChild(mark);
-    });
+});
 }
 
 function positionPopup(event, popup) {
