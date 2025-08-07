@@ -1,55 +1,74 @@
-// Usurpia Lens Bookmarklet - V2.6 (The "Guided Analyst" Model)
-// Implements "Analysis Modes" for guided learning and "Dialectic Mode" for intellectual self-defense.
+javascript:(function() {
 
-(function() {
+    // Usurpia Lens v2.6 - The Guided Analysis Engine
+    // This instrument is designed to be a pedagogical tool, guiding the user
+    // through the framework's logic and equipping them with intellectual self-defense.
 
-    // --- CONFIGURATION & FORTIFIED DICTIONARY ---
+    // --- CONFIGURATION & DICTIONARY ---
     const config = {
         settings: {
-            maxHighlights: 15,
-            initialAnalysisMode: 'engine', // 'engine', 'institutions', 'full'
-            initialDialecticMode: false // true or false
+            // The default density is 'standard', mapping to 15 highlights.
+            densityLevels: {
+                surgical: 5,
+                standard: 15,
+                deepscan: 50
+            }
         },
         dictionary: {
             core: {
                 name: "The Engine",
                 words: [
-                    { terms: ["economic growth", "growth", "growing pie"], primaryTerm: "economic growth", explanations: { headline: "Mandatory Expansion", summary: "The system's core imperative. It must expand exponentially to service the interest on past debt, chaining a mathematical function to a finite planet, which guarantees a future collision.", defense: "System Defense: Dismissed as being 'anti-progress.' This is the 'Solution Fallacy,' demanding a perfect alternative before a valid diagnosis can be made." } },
-                    { terms: ["debt", "indebtedness"], primaryTerm: "debt", explanations: { headline: "The Tool of Control", summary: "Presented as a tool for commerce, its primary function in this system is control. Perpetual indebtedness ensures compliance, transfers power, and compels participation in the 'Competition Trap'.", defense: "System Defense: Portrayed as a neutral tool for opportunity. This ignores that its systemic structure (interest-bearing, created by private banks) makes it a mechanism of control, not liberation." } },
-                    { term: "interest", explanations: { headline: "The Extraction Engine", summary: "The 'something for nothing' charge that powers wealth extraction from the real economy and mathematically necessitates the 'Mandatory Expansion'.", defense: "System Defense: Justified as 'the price of risk.' This ignores that the creditor risks little when they can create the money out of nothing and are backstopped by the government." } },
-                    { term: "usury", explanations: { headline: "The Ancient Poison", summary: "The ancient term for lending money at interest, which was historically contained as a social poison before being rebranded as 'progress' to create the modern system.", defense: "System Defense: Dismissed as an archaic, irrelevant religious term. This is a deliberate historical erasure to obscure the fact that the system's engine was once universally recognized as toxic." } },
-                    { term: "inequality", explanations: { headline: "A Feature, Not a Bug", summary: "The guaranteed mathematical outcome of a system where compounding interest systemically funnels wealth from debtors (the majority) to creditors (the few).", defense: "System Defense: Blamed on individual failings or 'globalization.' This is the 'Appeal to Complexity,' creating a fog to hide the simple, mathematical driver of wealth divergence." } }
+                    { terms: ["economic growth", "growth", "growing pie"], primaryTerm: "economic growth", explanations: { headline: "Mandatory Expansion", summary: "The system's core imperative. It must expand exponentially to service the interest on past debt, chaining a mathematical function to a finite planet, which guarantees a future collision." }, systemDefense: "Dismissed as being 'anti-progress.' This is the *Solution Fallacy*, which demands a perfect alternative before a valid diagnosis can be made. The diagnosis—that infinite growth on a finite planet is impossible—is valid on its own." },
+                    { terms: ["debt", "indebtedness"], primaryTerm: "debt", explanations: { headline: "The Tool of Control", summary: "Presented as a tool for commerce, its primary function in this system is control. Perpetual indebtedness ensures compliance, transfers power, and compels participation in the 'Competition Trap'." }, systemDefense: "Normalized as a 'fact of life' or a 'tool for investment.' This obscures its primary function as a mechanism of control and wealth transfer from the many to the few." },
+                    { term: "debt-money", explanations: { headline: "Interest-Bearing Debt-Money", summary: "The core design flaw. Virtually all money is created by private banks when they make loans, meaning the money supply itself is an instrument of debt." } },
+                    { term: "interest", explanations: { headline: "The Extraction Engine", summary: "The 'something for nothing' charge that powers wealth extraction from the real economy and mathematically necessitates the 'Mandatory Expansion'." } },
+                    { term: "usury", explanations: { headline: "The Ancient Poison", summary: "The ancient term for lending money at interest, which was historically contained as a social poison before being rebranded as 'progress' to create the modern system." } },
+                    { term: "financialization", explanations: { headline: "The Casino Economy", summary: "The core process of turning every aspect of the real economy (housing, food, health) into a speculative, debt-based asset, detaching 'value' from reality and subjecting it to the system's extractive logic." } },
+                    { term: "inflation", explanations: { headline: "Systemic Currency Debasement", summary: "A necessary feature of the system, used to manage unpayable debt levels by devaluing the currency. This functions as a hidden tax, eroding the savings of the populace to keep the system afloat." } },
+                    { term: "competition trap", explanations: { headline: "Mandated Competition", summary: "The forced state of conflict for survival, caused by the mathematical scarcity in the money system (always more debt owed than money exists). It structurally pits individuals and businesses against one another." } },
+                    { term: "inequality", explanations: { headline: "A Feature, Not a Bug", summary: "The guaranteed mathematical outcome of a system where compounding interest systemically funnels wealth from debtors (the majority) to creditors (the few)." }, systemDefense: "Framed as a natural outcome of 'meritocracy.' This ignores how the system's rules (interest on debt) mathematically guarantee wealth concentration, rigging the game before it starts." },
+                    { term: "legal tender", explanations: { headline: "The Mandatory Game", summary: "The law that forces citizens to use the state-sanctioned, debt-based currency to pay taxes and participate in society. This eliminates alternatives and ensures everyone is locked into the system." } }
                 ]
             },
             institutional: {
                 name: "Institutional Capture",
                 words: [
-                    { terms: ["Federal Reserve", "The Fed", "central bank"], primaryTerm: "Federal Reserve", explanations: { headline: "The Creditors' Cartel", summary: "A private banking cartel with a public mandate. Its primary function is not to serve the public, but to manage the stability and profitability of the debt-based system for its member banks.", defense: "System Defense: Portrayed as a necessary, objective manager of the economy. This is the 'Technocracy' argument, designed to make the system's control seem too complex for democratic debate." } },
-                    { terms: ["politician", "lawmaker", "government"], primaryTerm: "politician", explanations: { headline: "The System Manager", summary: "An actor in the political theater, primarily tasked with managing public discontent and passing legislation that serves the interests of the system's main beneficiaries (their donors).", defense: "System Defense: The focus is kept on partisan battles. This is a primary distraction, making people fight over the 'managers' while the system's owners and rules remain unchallenged." } },
-                    { term: "lobbying", explanations: { headline: "Systemic Bribery", summary: "The mechanism through which concentrated wealth, generated by the debt-engine, captures the political process. It ensures that laws protect and enhance the system, creating a feedback loop of power.", defense: "System Defense: Defended as 'free speech' and 'petitioning the government.' This sanitizes the reality that it makes political power a direct function of money, subverting democracy." } },
-                    { term: "GDP", explanations: { headline: "Gross Destruction Product", summary: "The system's primary metric of 'progress.' A flawed number where pollution, clear-cutting a forest, and building prisons are all counted as economic positives, perfectly revealing the system's perverse values.", defense: "System Defense: Defended as the best measure we have. This is institutional inertia, refusing to adopt metrics (like Genuine Progress Indicator) that would expose the system's destructive nature." } }
+                    { terms: ["Federal Reserve", "The Fed", "central bank"], primaryTerm: "Federal Reserve", explanations: { headline: "The Creditors' Cartel", summary: "A private banking cartel with a public mandate. Its primary function is not to serve the public, but to manage the stability and profitability of the debt-based system for its member banks." } },
+                    { term: "lobbying", explanations: { headline: "Systemic Bribery", summary: "The mechanism through which concentrated wealth, generated by the debt-engine, captures the political process. It ensures that laws protect and enhance the system, creating a feedback loop of power." } },
+                    { term: "technocracy", explanations: { headline: "The Rule of 'Experts'", summary: "The ideology that the system is too complex for democratic control and must be managed by an unelected, credentialed elite. This disempowers the public and shields the system's core principles from debate." } },
+                    { term: "GDP", explanations: { headline: "Gross Destruction Product", summary: "The system's primary metric of 'progress.' A flawed number where pollution, clear-cutting a forest, and building prisons are all counted as economic positives, perfectly revealing the system's perverse values." } }
                 ]
             },
             societal: {
-                name: "Societal & Cultural",
+                name: "Lived Experience",
                 words: [
-                    { term: "the economy", explanations: { headline: "The Abstraction We Serve", summary: "An abstract concept representing the flow of debt-money, which we are told we must serve. This inverts reality: a sane economy should serve human well-being, not demand its sacrifice.", defense: "System Defense: Naturalized as if it were a force of nature. This rhetoric ('the economy demands...') removes human agency and hides the fact that it is a set of man-made rules that can be changed." } },
-                    { term: "media", explanations: { headline: "Manufacturing Consent", summary: "A corporate-owned narrative machine that distracts with spectacle and divides with culture wars to prevent the public from questioning the foundational economic system.", defense: "System Defense: Protected by the ideal of a 'free press.' This ignores that ownership by a handful of corporations, all part of the same financial system, creates a powerful incentive to protect that system from scrutiny." } },
-                    { term: "consumer", explanations: { headline: "The Citizen, Commodified", summary: "The reframing of a human being from an active citizen into a passive vessel for consumption, whose primary civic duty is to take on debt to fuel 'economic growth'.", defense: "System Defense: Celebrated as 'consumer choice' and freedom. This reframes a duty (you must consume to keep the system growing) as a privilege, hiding the lack of freedom from the system itself." } },
-                    { term: "education", explanations: { headline: "The Compliance Engine", summary: "The primary function of the modern education system: to produce compliant, specialized workers and indebted consumers, rather than liberated, critical thinkers who might challenge the system.", defense: "System Defense: Justified as 'preparing students for the job market.' This presents the needs of the system as the primary goal of human development, rather than human development being the goal of the system." } },
-                    { term: "conspiracy", explanations: { headline: "The Thought-Terminating Weapon", summary: "The system's rhetorical self-defense. This word is deployed to ridicule and dismiss any rational analysis of its foundational rules, conflating systemic critique with paranoia to shut down debate.", defense: "System Defense: Its power lies in social proof. By labeling a critique a 'conspiracy,' it signals to others that the idea is socially unacceptable to consider, effectively outsourcing censorship to the public itself." } }
+                    { term: "the economy", explanations: { headline: "The Abstraction We Serve", summary: "An abstract concept representing the flow of debt-money, which we are told we must serve. This inverts reality: a sane economy should serve human well-being, not demand its sacrifice." } },
+                    { term: "meritocracy", explanations: { headline: "The Noble Lie", summary: "The core myth used to justify inequality. It claims success is based purely on individual talent and effort, ignoring the system's rigged starting positions and the gravitational pull of debt." } },
+                    { terms: ["jobs", "job creation"], primaryTerm: "jobs", explanations: { headline: "A Means of Debt Servitude", summary: "For the majority, not a source of purpose, but the necessary act of selling one's time to service the debts required to live in the system." } },
+                    { term: "education", explanations: { headline: "The Compliance Engine", summary: "The primary function of the modern education system: to produce compliant, specialized workers and indebted consumers, rather than liberated, critical thinkers who might challenge the system." } },
+                    { term: "media", explanations: { headline: "Manufacturing Consent", summary: "A corporate-owned narrative machine that distracts with spectacle and divides with culture wars to prevent the public from questioning the foundational economic system." }, systemDefense: "Defended under the banner of a 'free press.' This ignores the extreme concentration of ownership by the system's beneficiaries, whose interests dictate the narrative, ensuring foundational economic questions are never asked." },
+                    { term: "conspiracy", explanations: { headline: "The Thought-Terminating Weapon", summary: "The system's rhetorical self-defense. This word is deployed to ridicule and dismiss any rational analysis of its foundational rules, conflating systemic critique with paranoia to shut down debate." }, systemDefense: "This term is the system's immune response. It works by conflating a rational critique of the *rules of the game* (how the monetary system works) with an irrational belief about a secret cabal of *players*." }
                 ]
             },
             personal: {
-                name: "Personal & Relational",
+                name: "Lived Experience", // Merged with societal for Mode 3
                 words: [
-                    { term: "anxiety", explanations: { headline: "A Rational Response", summary: "The logical psychological state that results from living in a system of constant precarity, mandated competition, and information overload. It is a symptom of the environment, not a personal failing.", defense: "System Defense: Medicalized and individualized. By treating it as a personal chemical imbalance, the system avoids any inquiry into the environmental causes of the distress, turning a systemic problem into a personal one to be 'fixed' with pharmaceuticals." } },
-                    { term: "stress", explanations: { headline: "System Friction", summary: "The physical and mental toll of trying to keep up with the impossible demands of the 'Competition Trap' and the constant pressure to service debt.", defense: "System Defense: Normalized as a feature of 'modern life' or a sign of personal ambition. This reframes a systemic symptom as a status symbol, encouraging people to wear their own exploitation as a badge of honor." } },
-                    { term: "house", explanations: { headline: "A Financialized Human Need", summary: "A basic need for shelter, transformed by financialization into the primary vehicle for generational debt and a speculative asset for the wealthy.", defense: "System Defense: Portrayed as 'the American dream' and the primary way to 'build wealth.' This locks people into a lifetime of debt servitude in pursuit of a basic need that has been turned into a financial instrument." } },
-                    { term: "freedom", explanations: { headline: "The Freedom to Choose Your Creditor", summary: "The system's redefinition of liberty. It is not freedom from the system, but the consumer 'choice' between different brands of jobs, debts, and distractions within the mandatory game.", defense: "System Defense: Conflated with consumer choice. The vast array of products and lifestyles available for purchase creates an illusion of freedom that masks the fundamental lack of freedom from the underlying debt-based imperative." } }
+                    { term: "anxiety", explanations: { headline: "A Rational Response", summary: "The logical psychological state that results from living in a system of constant precarity, mandated competition, and information overload. It is a symptom of the environment, not a personal failing." } },
+                    { term: "family", explanations: { headline: "The Over-Stressed Economic Unit", summary: "A primary source of love and connection, now constantly strained by the need for multiple incomes just to service debt, pay for housing, and stay afloat in the 'Competition Trap'." } },
+                    { term: "community", explanations: { headline: "The Eroded Commons", summary: "The web of local trust and mutual support that is systemically dissolved by the 'Competition Trap,' which pits neighbors against each other and forces constant mobility for work." } },
+                    { term: "house", explanations: { headline: "A Financialized Human Need", summary: "A basic need for shelter, transformed by financialization into the primary vehicle for generational debt and a speculative asset for the wealthy." } },
+                    { term: "freedom", explanations: { headline: "The Freedom to Choose Your Creditor", summary: "The system's redefinition of liberty. It is not freedom from the system, but the consumer 'choice' between different brands of jobs, debts, and distractions within the mandatory game." } }
                 ]
             }
         }
+    };
+
+    // --- APPLICATION STATE ---
+    const state = {
+        isLensActive: true,
+        analysisMode: 'mode1',
+        isDialecticActive: false,
+        density: 'standard'
     };
     
     // --- DATA PREPARATION ---
@@ -60,96 +79,245 @@
         category.words.forEach(item => {
             const primaryTerm = item.primaryTerm || item.term;
             const terms = item.terms || [item.term];
-            const enrichedItem = { ...item, primaryTerm, category };
+            const enrichedItem = { ...item, primaryTerm, category: categoryKey };
             flatDictionary.push(enrichedItem);
             terms.forEach(t => termToCategoryMap[t.toLowerCase()] = categoryKey);
         });
     }
-    
+
     // --- CORE LOGIC ---
     function main() {
-        if (document.getElementById('usurpia-panel')) return;
+        if (document.getElementById('usurpia-panel-v2-6')) {
+            const panel = document.getElementById('usurpia-panel-v2-6');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            return;
+        }
+        console.log("Usurpia Lens v2.6 Activated.");
         injectStyles();
         const popup = createPopup();
         createControlPanel();
         setupPopupEventListeners(popup);
-        if (document.getElementById('usurpia-master-toggle').checked) runAnalysis();
+        runAnalysis();
     }
 
     function runAnalysis() {
+        if (!state.isLensActive) {
+            cleanupHighlights();
+            return;
+        }
         cleanupHighlights();
-        const activeMode = document.querySelector('input[name="usurpia-analysis-mode"]:checked').value;
-        const activeCategories = getActiveCategories(activeMode);
-        highlightKeywords(config.settings.maxHighlights, activeCategories);
+        highlightKeywords();
     }
-    
+
     function cleanupHighlights() {
         const highlights = document.querySelectorAll('.usurpia-highlight');
         highlights.forEach(span => {
             const parent = span.parentNode;
-            parent.replaceChild(document.createTextNode(span.textContent), span);
-            parent.normalize();
+            if (parent) {
+                parent.replaceChild(document.createTextNode(span.textContent), span);
+                parent.normalize();
+            }
         });
     }
 
-    function getActiveCategories(mode) {
-        if (mode === 'engine') return ['core'];
-        if (mode === 'institutions') return ['core', 'institutional'];
-        if (mode === 'full') return ['core', 'institutional', 'societal', 'personal'];
-        return [];
+    function injectStyles() {
+        let style = document.getElementById('usurpia-styles-v2-6');
+        if (style) return;
+        style = document.createElement('style');
+        style.id = 'usurpia-styles-v2-6';
+        style.innerHTML = `
+            .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; font-weight: normal; font-style: normal; }
+            #usurpia-popup-v2-6 { position: fixed; display: none; width: 300px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+            #usurpia-popup-v2-6 p { margin: 0 0 12px 0; padding: 0; }
+            #usurpia-popup-v2-6 .usurpia-defense { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; font-size: 13px; color: #444; }
+            #usurpia-popup-v2-6 .usurpia-defense strong { color: #c0392b; }
+            #usurpia-panel-v2-6 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+            #usurpia-panel-v2-6-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+            #usurpia-panel-v2-6 .usurpia-control-group { margin-top: 12px; }
+            #usurpia-panel-v2-6 label { display: block; margin-bottom: 6px; font-weight: bold; }
+            #usurpia-panel-v2-6 select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ced4da; }
+            #usurpia-panel-v2-6 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+            #usurpia-panel-v2-6 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+            #usurpia-panel-v2-6 .usurpia-density-control { display: flex; }
+            #usurpia-panel-v2-6 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+            #usurpia-panel-v2-6 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+            #usurpia-panel-v2-6 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+        `;
+        document.head.appendChild(style);
     }
 
     function createControlPanel() {
         const panel = document.createElement('div');
-        panel.id = 'usurpia-panel';
+        panel.id = 'usurpia-panel-v2-6';
         panel.innerHTML = `
-            <div id="usurpia-panel-header">Usurpia Lens v2.6</div>
-            <div><label><input type="checkbox" id="usurpia-master-toggle" checked> <strong>Lens Enabled</strong></label></div>
-            <div class="usurpia-control-group">
-                <label for="usurpia-density-slider">Highlight Density: <span id="usurpia-density-value">${config.settings.maxHighlights}</span></label>
-                <input type="range" id="usurpia-density-slider" min="1" max="50" value="${config.settings.maxHighlights}">
+            <div id="usurpia-panel-v2-6-header">Usurpia Lens v2.6</div>
+            <div class="usurpia-toggle-switch">
+                <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
+                <input type="checkbox" id="usurpia-master-toggle" checked>
             </div>
             <div class="usurpia-control-group">
-                <strong>Analysis Mode:</strong>
-                <label><input type="radio" name="usurpia-analysis-mode" value="engine" ${config.settings.initialAnalysisMode === 'engine' ? 'checked' : ''}> Engine Only</label>
-                <label><input type="radio" name="usurpia-analysis-mode" value="institutions" ${config.settings.initialAnalysisMode === 'institutions' ? 'checked' : ''}> + Institutions</label>
-                <label><input type="radio" name="usurpia-analysis-mode" value="full" ${config.settings.initialAnalysisMode === 'full' ? 'checked' : ''}> Full Spectrum</label>
+                <label for="usurpia-analysis-mode">Analysis Mode</label>
+                <select id="usurpia-analysis-mode">
+                    <option value="mode1" selected>Mode 1: The Engine</option>
+                    <option value="mode2">Mode 2: Institutional Capture</option>
+                    <option value="mode3">Mode 3: Lived Experience</option>
+                    <option value="mode4">Mode 4: Full Spectrum</option>
+                </select>
             </div>
             <div class="usurpia-control-group">
-                <strong>Advanced:</strong>
-                <label><input type="checkbox" id="usurpia-dialectic-toggle" ${config.settings.initialDialecticMode ? 'checked' : ''}> Dialectic Mode</label>
+                <label>Density</label>
+                <div class="usurpia-density-control">
+                    <button data-density="surgical">Surgical</button>
+                    <button data-density="standard" class="active">Standard</button>
+                    <button data-density="deepscan">Deep Scan</button>
+                </div>
+            </div>
+            <div class="usurpia-control-group">
+                <div class="usurpia-toggle-switch">
+                    <label for="usurpia-dialectic-mode" style="margin-bottom:0;">Enable Dialectic Mode</label>
+                    <input type="checkbox" id="usurpia-dialectic-mode">
+                </div>
             </div>
         `;
         document.body.appendChild(panel);
+        setupPanelEventListeners(panel);
+        makeDraggable(panel);
+    }
+    
+    function setupPanelEventListeners(panel) {
+        document.getElementById('usurpia-master-toggle').addEventListener('change', (e) => {
+            state.isLensActive = e.target.checked;
+            runAnalysis();
+        });
+        document.getElementById('usurpia-analysis-mode').addEventListener('change', (e) => {
+            state.analysisMode = e.target.value;
+            runAnalysis();
+        });
+        document.getElementById('usurpia-dialectic-mode').addEventListener('change', (e) => {
+            state.isDialecticActive = e.target.checked;
+        });
+        panel.querySelector('.usurpia-density-control').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                panel.querySelector('.usurpia-density-control .active').classList.remove('active');
+                e.target.classList.add('active');
+                state.density = e.target.dataset.density;
+                runAnalysis();
+            }
+        });
+    }
 
-        // Event Listeners for Panel
-        const masterToggle = document.getElementById('usurpia-master-toggle');
-        const densitySlider = document.getElementById('usurpia-density-slider');
-        const analysisModes = document.querySelectorAll('input[name="usurpia-analysis-mode"]');
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = document.getElementById('usurpia-panel-v2-6-header');
+        header.onmousedown = dragMouseDown;
+        function dragMouseDown(e) {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    function createPopup() {
+        let popup = document.createElement('div');
+        popup.id = 'usurpia-popup-v2-6';
+        document.body.appendChild(popup);
+        return popup;
+    }
+
+    function getActiveCategories() {
+        switch (state.analysisMode) {
+            case 'mode1': return ['core'];
+            case 'mode2': return ['core', 'institutional'];
+            case 'mode3': return ['core', 'institutional', 'societal', 'personal'];
+            case 'mode4': return Object.keys(config.dictionary);
+            default: return [];
+        }
+    }
+
+    function highlightKeywords() {
+        const activeCategories = getActiveCategories();
+        const activeTerms = flatDictionary
+            .filter(item => activeCategories.includes(item.category))
+            .flatMap(d => d.terms || [d.term]);
+
+        if (activeTerms.length === 0) return;
         
-        masterToggle.addEventListener('change', () => {
-            document.body.classList.toggle('usurpia-active', masterToggle.checked);
-            if (masterToggle.checked) runAnalysis(); else cleanupHighlights();
+        const maxHighlights = config.settings.densityLevels[state.density];
+        const masterRegex = new RegExp(`\\b(${activeTerms.join('|')})\\b`, 'gi');
+        
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, .usurpia-highlight, #usurpia-popup-v2-6, #usurpia-panel-v2-6')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
         });
 
-        densitySlider.addEventListener('input', e => { document.getElementById('usurpia-density-value').textContent = e.target.value; });
-        densitySlider.addEventListener('change', e => {
-            config.settings.maxHighlights = parseInt(e.target.value, 10);
-            if (masterToggle.checked) runAnalysis();
-        });
+        let candidates = [];
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const matches = [...node.nodeValue.matchAll(masterRegex)];
+            matches.forEach(match => candidates.push({ node, match: match[0], offset: match.index }));
+        }
 
-        analysisModes.forEach(radio => radio.addEventListener('change', () => { if (masterToggle.checked) runAnalysis(); }));
+        let highlightsToPerform = candidates;
+        if (candidates.length > maxHighlights) {
+            for (let i = candidates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+            }
+            highlightsToPerform = candidates.slice(0, maxHighlights);
+        }
+
+        const groupedByNode = highlightsToPerform.reduce((acc, {node, match, offset}) => {
+            const key = [...document.getElementsByTagName('*')].indexOf(node.parentElement);
+            if (!acc[key]) acc[key] = { node: node, matches: [] };
+            acc[key].matches.push({ match, offset });
+            return acc;
+        }, {});
+        
+        Object.values(groupedByNode).forEach(({node, matches}) => {
+            matches.sort((a,b) => b.offset - a.offset);
+            matches.forEach(({match, offset}) => {
+                const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => new RegExp(`^${match}$`, 'i').test(t)));
+                if (entry) {
+                    const span = document.createElement('span');
+                    span.className = 'usurpia-highlight';
+                    span.setAttribute('data-term', entry.primaryTerm);
+                    span.textContent = match;
+                    
+                    const range = document.createRange();
+                    range.setStart(node, offset);
+                    range.setEnd(node, offset + match.length);
+                    range.deleteContents();
+                    range.insertNode(span);
+                }
+            });
+        });
     }
 
     function setupPopupEventListeners(popup) {
+        let hideTimer;
         document.body.addEventListener('mouseover', e => {
             if (e.target.classList.contains('usurpia-highlight')) {
+                clearTimeout(hideTimer);
                 const primaryTerm = e.target.getAttribute('data-term');
                 const wordData = flatDictionary.find(w => w.primaryTerm === primaryTerm);
                 if (wordData) {
                     let popupHTML = `<p><strong>${wordData.explanations.headline}:</strong> ${wordData.explanations.summary}</p>`;
-                    if (document.getElementById('usurpia-dialectic-toggle').checked && wordData.explanations.defense) {
-                        popupHTML += `<div class="usurpia-defense"><p><strong>System Defense:</strong> ${wordData.explanations.defense}</p></div>`;
+                    if (state.isDialecticActive && wordData.systemDefense) {
+                        popupHTML += `<div class="usurpia-defense"><strong>System Defense:</strong> ${wordData.systemDefense}</div>`;
                     }
                     popup.innerHTML = popupHTML;
                     popup.style.display = 'block';
@@ -157,80 +325,23 @@
                 }
             }
         });
-        // Simplified mouseout logic
         document.body.addEventListener('mouseout', e => {
-            if (e.target.classList.contains('usurpia-highlight') && !popup.matches(':hover')) {
-                popup.style.display = 'none';
+            if (e.target.classList.contains('usurpia-highlight')) {
+                hideTimer = setTimeout(() => { popup.style.display = 'none'; }, 200);
             }
         });
+        popup.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
         popup.addEventListener('mouseleave', () => { popup.style.display = 'none'; });
     }
 
-    // --- UTILITY FUNCTIONS (Styles, Highlighting, etc.) ---
-    function injectStyles() {
-        const style = document.createElement('style'); style.id = 'usurpia-styles';
-        style.innerHTML = `
-            body:not(.usurpia-active) #usurpia-panel, body:not(.usurpia-active) .usurpia-highlight, body:not(.usurpia-active) #usurpia-popup { display: none !important; }
-            .usurpia-highlight { background-color: #FFFFAA !important; color: #000 !important; cursor: help; }
-            #usurpia-popup { position: fixed; display: none; width: 280px; background: #fff; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: sans-serif; font-size: 14px; line-height: 1.5; z-index: 999999999; }
-            #usurpia-popup p { margin: 0 0 10px 0; }
-            .usurpia-defense { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; background: #f7f7f7; padding: 10px; border-radius: 4px;}
-            .usurpia-defense p { margin: 0; color: #444; }
-            #usurpia-panel { position: fixed; bottom: 20px; left: 20px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000000000; padding: 15px; font-family: sans-serif; font-size: 12px; }
-            #usurpia-panel-header { text-align: center; font-weight: bold; margin-bottom: 10px; }
-            #usurpia-panel label { display: block; margin: 5px 0; user-select: none; }
-            #usurpia-panel .usurpia-control-group { border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
-        `;
-        document.head.appendChild(style);
+    function positionPopup(event, popup) {
+        let x = event.clientX + 15; let y = event.clientY + 15;
+        const popupWidth = popup.offsetWidth; const popupHeight = popup.offsetHeight;
+        if (x + popupWidth > window.innerWidth) x = event.clientX - popupWidth - 15;
+        if (y + popupHeight > window.innerHeight) y = event.clientY - popupHeight - 15;
+        popup.style.left = `${x}px`;
+        popup.style.top = `${y}px`;
     }
-    
-    function createPopup() { let p = document.createElement('div'); p.id = 'usurpia-popup'; document.body.appendChild(p); return p; }
-    
-    function highlightKeywords(maxHighlights, activeCategories) {
-        const termsToHighlight = flatDictionary.filter(d => activeCategories.includes(d.category));
-        if (termsToHighlight.length === 0) return;
-
-        const termStrings = [...new Set(termsToHighlight.flatMap(d => d.terms || [d.term]))];
-        const masterRegex = new RegExp(`\\b(${termStrings.join('|')})\\b`, 'gi');
-        
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-            acceptNode: node => (node.parentElement.tagName.match(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|A)$/i) || node.parentElement.closest('#usurpia-panel')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
-        });
-
-        let textNodes = [];
-        while(walker.nextNode()) textNodes.push(walker.currentNode);
-
-        textNodes.forEach(node => {
-            const matches = [...node.nodeValue.matchAll(masterRegex)];
-            if(matches.length === 0) return;
-            
-            const parent = node.parentNode;
-            let lastIndex = 0;
-            matches.forEach(match => {
-                const foundTerm = match[0];
-                const entry = flatDictionary.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === foundTerm.toLowerCase()));
-                if(!entry) return;
-
-                const offset = match.index;
-                if (offset > lastIndex) {
-                    parent.insertBefore(document.createTextNode(node.nodeValue.substring(lastIndex, offset)), node);
-                }
-                const span = document.createElement('span');
-                span.className = 'usurpia-highlight';
-                span.setAttribute('data-term', entry.primaryTerm);
-                span.textContent = foundTerm;
-                parent.insertBefore(span, node);
-                lastIndex = offset + foundTerm.length;
-            });
-            if (lastIndex < node.nodeValue.length) {
-                parent.insertBefore(document.createTextNode(node.nodeValue.substring(lastIndex)), node);
-            }
-            parent.removeChild(node);
-        });
-    }
-
-    function positionPopup(event, popup) { /* Standard positioning logic */ let x = event.clientX + 10, y = event.clientY + 10; if (x + popup.offsetWidth > window.innerWidth) x = event.clientX - popup.offsetWidth - 10; if (y + popup.offsetHeight > window.innerHeight) y = event.clientY - popup.offsetHeight - 10; popup.style.left = `${x}px`; popup.style.top = `${y}px`; }
 
     main();
-
 })();
