@@ -1,8 +1,8 @@
 javascript:(function() {
-// Usurpia Lens v3.6 (Dictionary Consolidation)
-// This version corrects a critical data duplication error from v3.5. The dictionary has been
-// meticulously de-duplicated and consolidated to ensure that every term has a single, authoritative
-// entry. This restores consistent and predictable behavior for all popups and analysis modes.
+// Usurpia Lens v3.6.1 (Data Integrity Check)
+// This version introduces a critical internal safeguard based on user analysis.
+// A new `validateDictionary()` function runs on load to check for duplicate primary terms,
+// preventing the data duplication error that broke a previous version. This ensures long-term stability.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -125,20 +125,38 @@ const config = {
 
 const state = { isLensActive: true, isDialecticActive: false, isFluxModeActive: false, isResonanceModeActive: false, density: 'standard' };
 let flatDictionary = [];
-for (const categoryKey in config.dictionary) {
-    const category = config.dictionary[categoryKey];
-    category.words.forEach(item => {
-        flatDictionary.push({ ...item, primaryTerm: item.primaryTerm || item.term, category: categoryKey, isSurgical: category.isSurgical });
-    });
+
+function validateDictionary(dictionary) {
+    const seenTerms = new Set();
+    for (const categoryKey in dictionary) {
+        const category = dictionary[categoryKey];
+        for (const item of category.words) {
+            const primaryTerm = item.primaryTerm || item.term;
+            if (seenTerms.has(primaryTerm)) {
+                console.error(`Usurpia Lens v3.6.1: DICTIONARY INTEGRITY VIOLATION - Duplicate primaryTerm found: '${primaryTerm}'. This will cause unpredictable behavior.`);
+            }
+            seenTerms.add(primaryTerm);
+        }
+    }
 }
 
 function main() {
-    if (document.getElementById('usurpia-panel-v3-6')) {
-        document.getElementById('usurpia-panel-v3-6').remove();
+    if (document.getElementById('usurpia-panel-v3-6-1')) {
+        document.getElementById('usurpia-panel-v3-6-1').remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.6 (Dictionary Consolidation) Activated.");
+    console.log("Usurpia Lens v3.6.1 (Data Integrity Check) Activated.");
+    
+    validateDictionary(config.dictionary); // Run the validation check
+
+    for (const categoryKey in config.dictionary) {
+        const category = config.dictionary[categoryKey];
+        category.words.forEach(item => {
+            flatDictionary.push({ ...item, primaryTerm: item.primaryTerm || item.term, category: categoryKey, isSurgical: category.isSurgical });
+        });
+    }
+
     injectStyles();
     createControlPanel();
     const popup = createPopup();
@@ -163,7 +181,7 @@ function cleanupHighlights() {
             parent.normalize();
         }
     });
-    const scrollbar = document.getElementById('usurpia-scrollbar-v3-6');
+    const scrollbar = document.getElementById('usurpia-scrollbar-v3-6-1');
     if (scrollbar) scrollbar.remove();
 }
 
@@ -185,7 +203,7 @@ function highlightKeywords() {
     const alreadyHighlightedTerms = new Set();
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-6, #usurpia-panel-v3-6')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-6-1, #usurpia-panel-v3-6-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
     });
 
     let nodesToProcess = [];
@@ -229,35 +247,35 @@ function highlightKeywords() {
 }
 
 function injectStyles() {
-    let style = document.getElementById('usurpia-styles-v3-6');
+    let style = document.getElementById('usurpia-styles-v3-6-1');
     if (style) return;
     style = document.createElement('style');
-    style.id = 'usurpia-styles-v3-6';
+    style.id = 'usurpia-styles-v3-6-1';
     style.innerHTML = `
         .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
-        #usurpia-popup-v3-6 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
-        #usurpia-popup-v3-6 p { margin: 0 0 12px 0; padding: 0; }
-        #usurpia-popup-v3-6 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-6 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
-        #usurpia-popup-v3-6 .usurpia-defense strong { color: #c0392b; }
-        #usurpia-popup-v3-6 .usurpia-flux strong { color: #2980b9; }
-        #usurpia-popup-v3-6 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
-        #usurpia-popup-v3-6 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
-        #usurpia-popup-v3-6 .usurpia-resonance strong { color: #8e44ad; }
-        #usurpia-popup-v3-6 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
-        #usurpia-popup-v3-6 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
-        #usurpia-popup-v3-6 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
-        #usurpia-panel-v3-6 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
-        #usurpia-panel-v3-6-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
-        #usurpia-panel-v3-6 .usurpia-control-group { margin-top: 12px; }
-        #usurpia-panel-v3-6 label { display: block; margin-bottom: 6px; font-weight: bold; }
-        #usurpia-panel-v3-6 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
-        #usurpia-panel-v3-6 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
-        #usurpia-panel-v3-6 .usurpia-density-control { display: flex; }
-        #usurpia-panel-v3-6 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
-        #usurpia-panel-v3-6 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
-        #usurpia-panel-v3-6 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
-        #usurpia-scrollbar-v3-6 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
+        #usurpia-popup-v3-6-1 { position: fixed; display: none; width: 320px; max-width: 90%; background-color: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; z-index: 2147483647; text-align: left; }
+        #usurpia-popup-v3-6-1 p { margin: 0 0 12px 0; padding: 0; }
+        #usurpia-popup-v3-6-1 .usurpia-popup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-6-1 .usurpia-popup-section strong { display: block; margin-bottom: 5px; font-size: 13px; }
+        #usurpia-popup-v3-6-1 .usurpia-defense strong { color: #c0392b; }
+        #usurpia-popup-v3-6-1 .usurpia-flux strong { color: #2980b9; }
+        #usurpia-popup-v3-6-1 .usurpia-flux-list { list-style-type: '→ '; font-size: 13px; padding-left: 20px; margin: 0; color: #34495e; }
+        #usurpia-popup-v3-6-1 .usurpia-resonance { font-style: italic; color: #2c3e50; font-size: 13px; }
+        #usurpia-popup-v3-6-1 .usurpia-resonance strong { color: #8e44ad; }
+        #usurpia-popup-v3-6-1 .usurpia-links { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        #usurpia-popup-v3-6-1 .usurpia-links a { display: block; color: #007bff !important; text-decoration: underline !important; margin-top: 5px; font-size: 13px; }
+        #usurpia-popup-v3-6-1 .usurpia-links a.usurpia-link-paid { font-weight: bold; color: #0056b3 !important; }
+        #usurpia-panel-v3-6-1 { position: fixed; bottom: 20px; left: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2147483646; padding: 10px 15px; font-family: sans-serif; font-size: 13px; color: #212529; min-width: 240px; }
+        #usurpia-panel-v3-6-1-header { padding: 8px 0; cursor: move; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #dee2e6; margin-bottom: 10px; user-select: none; }
+        #usurpia-panel-v3-6-1 .usurpia-control-group { margin-top: 12px; }
+        #usurpia-panel-v3-6-1 label { display: block; margin-bottom: 6px; font-weight: bold; }
+        #usurpia-panel-v3-6-1 .usurpia-density-control button { background: #e9ecef; border: 1px solid #ced4da; padding: 6px 10px; cursor: pointer; flex-grow: 1; }
+        #usurpia-panel-v3-6-1 .usurpia-density-control button.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+        #usurpia-panel-v3-6-1 .usurpia-density-control { display: flex; }
+        #usurpia-panel-v3-6-1 .usurpia-density-control button:first-child { border-radius: 4px 0 0 4px; }
+        #usurpia-panel-v3-6-1 .usurpia-density-control button:last-child { border-radius: 0 4px 4px 0; }
+        #usurpia-panel-v3-6-1 .usurpia-toggle-switch { display: flex; align-items: center; justify-content: space-between; }
+        #usurpia-scrollbar-v3-6-1 { position: fixed; top: 0; right: 0; width: 10px; height: 100%; z-index: 2147483645; }
         .usurpia-scrollbar-mark { position: absolute; right: 0; width: 10px; height: 3px; background: #FF4500; opacity: 0.6; cursor: pointer; }
     `;
     document.head.appendChild(style);
@@ -265,9 +283,9 @@ function injectStyles() {
 
 function createControlPanel() {
     const panel = document.createElement('div');
-    panel.id = 'usurpia-panel-v3-6';
+    panel.id = 'usurpia-panel-v3-6-1';
     panel.innerHTML = `
-        <div id="usurpia-panel-v3-6-header">Usurpia Lens v3.6</div>
+        <div id="usurpia-panel-v3-6-1-header">Usurpia Lens v3.6.1</div>
         <div class="usurpia-toggle-switch">
             <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
             <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -322,7 +340,7 @@ function setupPanelEventListeners(panel) {
 
 function createPopup() {
     let popup = document.createElement('div');
-    popup.id = 'usurpia-popup-v3-6';
+    popup.id = 'usurpia-popup-v3-6-1';
     document.body.appendChild(popup);
     return popup;
 }
@@ -367,7 +385,7 @@ function setupPopupEventListeners(popup) {
 
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = document.getElementById('usurpia-panel-v3-6-header');
+    const header = document.getElementById('usurpia-panel-v3-6-1-header');
     if (header) header.onmousedown = dragMouseDown;
     function dragMouseDown(e) { 
         e = e || window.event; e.preventDefault(); 
@@ -388,7 +406,7 @@ function makeDraggable(element) {
 
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
-    scrollbar.id = 'usurpia-scrollbar-v3-6';
+    scrollbar.id = 'usurpia-scrollbar-v3-6-1';
     document.body.appendChild(scrollbar);
     const highlights = document.querySelectorAll('.usurpia-highlight');
     if (highlights.length === 0) return;
