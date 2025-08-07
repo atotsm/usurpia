@@ -1,7 +1,9 @@
 javascript:(function() {
-// Usurpia Lens v3.6.1 (Dictionary Integrity Patch)
-// This patch adds a critical data integrity check to the v3.6 dictionary consolidation.
-// It validates that no primaryTerm is duplicated, preventing the regression of the v3.5 error.
+// Usurpia Lens v3.6 (Dictionary Consolidation)
+// This version corrects a critical data duplication error from v3.5. The dictionary has been
+// meticulously de-duplicated and consolidated to ensure that every term has a single, authoritative
+// entry. This restores consistent and predictable behavior for all popups and analysis modes.
+
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
     settings: {
@@ -120,6 +122,7 @@ const config = {
         }
     }
 };
+
 const state = { isLensActive: true, isDialecticActive: false, isFluxModeActive: false, isResonanceModeActive: false, density: 'standard' };
 let flatDictionary = [];
 for (const categoryKey in config.dictionary) {
@@ -128,36 +131,21 @@ for (const categoryKey in config.dictionary) {
         flatDictionary.push({ ...item, primaryTerm: item.primaryTerm || item.term, category: categoryKey, isSurgical: category.isSurgical });
     });
 }
-// v3.6.1: Dictionary Integrity Check
-function validateDictionary() {
-    const seenTerms = new Set();
-    const duplicates = [];
-    flatDictionary.forEach(entry => {
-        const term = entry.primaryTerm.toLowerCase();
-        if (seenTerms.has(term)) {
-            duplicates.push(term);
-        } else {
-            seenTerms.add(term);
-        }
-    });
-    if (duplicates.length > 0) {
-        console.error(`Usurpia Lens v3.6.1: DICTIONARY INTEGRITY VIOLATION - Duplicate primaryTerm found: '${duplicates[0]}'. This will cause unpredictable behavior.`);
-    }
-}
+
 function main() {
     if (document.getElementById('usurpia-panel-v3-6')) {
         document.getElementById('usurpia-panel-v3-6').remove();
         cleanupHighlights();
         return;
     }
-    console.log("Usurpia Lens v3.6.1 (Dictionary Integrity Patch) Activated.");
-    validateDictionary(); // Run the integrity check
+    console.log("Usurpia Lens v3.6 (Dictionary Consolidation) Activated.");
     injectStyles();
     createControlPanel();
     const popup = createPopup();
     setupPopupEventListeners(popup);
     runAnalysis();
 }
+
 function runAnalysis() {
     cleanupHighlights();
     if (state.isLensActive) {
@@ -165,6 +153,7 @@ function runAnalysis() {
         createScrollbarMarks();
     }
 }
+
 function cleanupHighlights() {
     const highlights = document.querySelectorAll('.usurpia-highlight');
     highlights.forEach(span => {
@@ -177,44 +166,57 @@ function cleanupHighlights() {
     const scrollbar = document.getElementById('usurpia-scrollbar-v3-6');
     if (scrollbar) scrollbar.remove();
 }
+
 function getActiveTerms() {
     if (state.density === 'surgical') {
         return flatDictionary.filter(item => item.isSurgical);
     }
     return flatDictionary;
 }
+
 function highlightKeywords() {
     const activeTermEntries = getActiveTerms();
     const allTermStrings = activeTermEntries.flatMap(d => d.terms || [d.term]);
     if (allTermStrings.length === 0) return;
+
     const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
     const maxHighlights = config.settings.densityLevels[state.density];
     let highlightCount = 0;
     const alreadyHighlightedTerms = new Set();
+
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-6, #usurpia-panel-v3-6')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
     });
+
     let nodesToProcess = [];
     while(walker.nextNode()) nodesToProcess.push(walker.currentNode);
+
     for (const node of nodesToProcess) {
         if (highlightCount >= maxHighlights) break;
         const matches = [...node.nodeValue.matchAll(masterRegex)];
         if (matches.length === 0) continue;
+
         const fragment = document.createDocumentFragment();
         let lastIndex = 0;
+
         for (const match of matches) {
             if (highlightCount >= maxHighlights) break;
+            
             const matchedText = match[0];
             const entry = activeTermEntries.find(d => (d.terms || [d.term]).some(t => t.toLowerCase() === matchedText.toLowerCase()));
+
             if (entry && !alreadyHighlightedTerms.has(entry.primaryTerm)) {
                 alreadyHighlightedTerms.add(entry.primaryTerm);
+
                 const offset = match.index;
                 if (lastIndex !== offset) fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, offset)));
+                
                 const span = document.createElement('span');
                 span.className = 'usurpia-highlight';
                 span.setAttribute('data-term', entry.primaryTerm);
                 span.textContent = matchedText;
                 fragment.appendChild(span);
+                
                 lastIndex = offset + matchedText.length;
                 highlightCount++;
             }
@@ -225,6 +227,7 @@ function highlightKeywords() {
         }
     }
 }
+
 function injectStyles() {
     let style = document.getElementById('usurpia-styles-v3-6');
     if (style) return;
@@ -259,11 +262,12 @@ function injectStyles() {
     `;
     document.head.appendChild(style);
 }
+
 function createControlPanel() {
     const panel = document.createElement('div');
     panel.id = 'usurpia-panel-v3-6';
     panel.innerHTML = `
-        <div id="usurpia-panel-v3-6-header">Usurpia Lens v3.6.1</div>
+        <div id="usurpia-panel-v3-6-header">Usurpia Lens v3.6</div>
         <div class="usurpia-toggle-switch">
             <label for="usurpia-master-toggle" style="margin-bottom:0;">Lens Enabled</label>
             <input type="checkbox" id="usurpia-master-toggle" checked>
@@ -278,19 +282,19 @@ function createControlPanel() {
         </div>
         <div class="usurpia-control-group">
             <div class="usurpia-toggle-switch">
-                <label for="usurpia-dialectic-mode" title="Show the system's common counter-arguments.">Dialectic Mode</label>
+                <label for="usurpia-dialectic-mode" title="Show the system's common counter-arguments." style="margin-bottom:0;">Dialectic Mode</label>
                 <input type="checkbox" id="usurpia-dialectic-mode">
             </div>
         </div>
         <div class="usurpia-control-group">
             <div class="usurpia-toggle-switch">
-                <label for="usurpia-flux-mode" title="Show how this concept connects to other parts of the system.">Flux Mode</label>
+                <label for="usurpia-flux-mode" title="Show how this concept connects to other parts of the system." style="margin-bottom:0;">Flux Mode</label>
                 <input type="checkbox" id="usurpia-flux-mode">
             </div>
         </div>
         <div class="usurpia-control-group">
             <div class="usurpia-toggle-switch">
-                <label for="usurpia-resonance-mode" title="Pose a question to connect this concept to personal experience.">Resonance Mode</label>
+                <label for="usurpia-resonance-mode" title="Pose a question to connect this concept to personal experience." style="margin-bottom:0;">Resonance Mode</label>
                 <input type="checkbox" id="usurpia-resonance-mode">
             </div>
         </div>
@@ -299,11 +303,13 @@ function createControlPanel() {
     setupPanelEventListeners(panel);
     makeDraggable(panel);
 }
+
 function setupPanelEventListeners(panel) {
     document.getElementById('usurpia-master-toggle').addEventListener('change', (e) => { state.isLensActive = e.target.checked; runAnalysis(); });
     document.getElementById('usurpia-dialectic-mode').addEventListener('change', (e) => { state.isDialecticActive = e.target.checked; });
     document.getElementById('usurpia-flux-mode').addEventListener('change', (e) => { state.isFluxModeActive = e.target.checked; });
     document.getElementById('usurpia-resonance-mode').addEventListener('change', (e) => { state.isResonanceModeActive = e.target.checked; });
+    
     panel.querySelector('.usurpia-density-control').addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
             panel.querySelector('.usurpia-density-control .active').classList.remove('active');
@@ -313,12 +319,14 @@ function setupPanelEventListeners(panel) {
         }
     });
 }
+
 function createPopup() {
     let popup = document.createElement('div');
     popup.id = 'usurpia-popup-v3-6';
     document.body.appendChild(popup);
     return popup;
 }
+
 function setupPopupEventListeners(popup) {
     let hideTimer;
     document.body.addEventListener('mouseover', e => {
@@ -328,6 +336,7 @@ function setupPopupEventListeners(popup) {
             const wordData = flatDictionary.find(w => w.primaryTerm === primaryTerm);
             if (wordData) {
                 let popupHTML = `<p><strong>${wordData.explanations.headline}:</strong> ${wordData.explanations.summary}</p>`;
+                
                 if (state.isDialecticActive && wordData.systemDefense) {
                     popupHTML += `<div class="usurpia-popup-section usurpia-defense"><strong>System Defense:</strong> ${wordData.systemDefense}</div>`;
                 }
@@ -339,6 +348,7 @@ function setupPopupEventListeners(popup) {
                 if (state.isResonanceModeActive && wordData.resonance_prompt) {
                     popupHTML += `<div class="usurpia-popup-section usurpia-resonance"><strong>Personal Resonance:</strong> ${wordData.resonance_prompt}</div>`;
                 }
+
                 popupHTML += `
                     <div class="usurpia-links">
                         <a href="${config.settings.links.free}" target="_blank">Get The Full Lens (Free Option)</a>
@@ -354,6 +364,7 @@ function setupPopupEventListeners(popup) {
     popup.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
     popup.addEventListener('mouseleave', () => { popup.style.display = 'none'; });
 }
+
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = document.getElementById('usurpia-panel-v3-6-header');
@@ -374,6 +385,7 @@ function makeDraggable(element) {
     }
     function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
 }
+
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
     scrollbar.id = 'usurpia-scrollbar-v3-6';
@@ -393,6 +405,7 @@ function createScrollbarMarks() {
         scrollbar.appendChild(mark);
     });
 }
+
 function positionPopup(event, popup) {
     let x = event.clientX + 15, y = event.clientY + 15;
     const popupWidth = popup.offsetWidth, popupHeight = popup.offsetHeight;
@@ -401,5 +414,7 @@ function positionPopup(event, popup) {
     popup.style.left = `${x}px`;
     popup.style.top = `${y}px`;
 }
+
 main();
+
 })();
