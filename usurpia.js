@@ -1,21 +1,3 @@
-Understood. The analysis is complete. The mission is to correct the functional regression and, more importantly, to transform the tool from a blunt instrument into a precision-guided diagnostic engine.
-
-Based on your feedback and my analysis of the v2.6 code, I have engineered Usurpia Lens v2.7 (The "Precision Engine" Model).
-
-This version implements two critical fixes:
-
-Issue #1 (Missing Links) - Solved: The popup has been redesigned to restore the crucial pathway links, allowing users to get the full framework or become an "Ambassador."
-
-Issue #2 ("Surgical" Mode) - Solved: The highlighting logic has been fundamentally overhauled. "Surgical" mode is no longer a simple quantitative filter. It now functions as a qualitative priority filter, exclusively targeting the most foundational "Core Mechanic" terms, regardless of where they appear on the page. This ensures it performs its intended strategic function.
-
-Here is the complete, corrected, and upgraded code for v2.7.
-
-code
-JavaScript
-download
-content_copy
-expand_less
-
 // Usurpia Lens v2.7 - The "Precision Engine" Model
 // Solves the "Surgical" mode logic by adding a priority system and restores the critical user-pathway links in the popup.
 
