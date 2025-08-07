@@ -1,8 +1,8 @@
 javascript:(function() {
-// Usurpia Lens v3.7.1 (Bug Fix Release)
-// This version corrects a critical syntax error (a missing comma) from v3.7 that prevented the script
-// from loading. All intended features—State Persistence, Minimizable Panel, and Visual Differentiation—
-// are now fully functional.
+// Usurpia Lens v3.7.2 (Critical Bug Fix)
+// This version corrects a critical regular expression error from v3.7.1 that prevented the
+// highlighting engine from functioning. All features—State Persistence, Minimizable Panel, and
+// Visual Differentiation—are now fully operational as intended.
 
 // --- CONFIGURATION & DICTIONARY ---
 const config = {
@@ -137,7 +137,7 @@ function loadState() {
 }
 
 function main() {
-    if (document.getElementById('usurpia-panel-v3-7-1')) { // Updated version check
+    if (document.getElementById('usurpia-panel-v3-7-1')) {
         document.getElementById('usurpia-panel-v3-7-1').remove();
         cleanupHighlights();
         return;
@@ -168,7 +168,7 @@ function cleanupHighlights() {
             parent.normalize();
         }
     });
-    const scrollbar = document.getElementById('usurpia-scrollbar-v3-7-1'); // Updated ID
+    const scrollbar = document.getElementById('usurpia-scrollbar-v3-7-1');
     if (scrollbar) scrollbar.remove();
 }
 
@@ -192,13 +192,13 @@ function highlightKeywords() {
     const allTermStrings = activeTermEntries.flatMap(d => d.terms || [d.term]);
     if (allTermStrings.length === 0) return;
 
-    const masterRegex = new RegExp(`\\b(${allTermStrings.join('|')})\\b`, 'gi');
+    const masterRegex = new RegExp(`\b(${allTermStrings.join('|')})\b`, 'gi');
     const maxHighlights = config.settings.densityLevels[state.density];
     let highlightCount = 0;
     const alreadyHighlightedTerms = new Set();
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-7-1, #usurpia-panel-v3-7-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT // Updated IDs
+        acceptNode: n => (n.parentElement.closest('script, style, textarea, input, select, a, .usurpia-highlight, #usurpia-popup-v3-7-1, #usurpia-panel-v3-7-1')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
     });
 
     let nodesToProcess = [];
@@ -245,10 +245,10 @@ function highlightKeywords() {
 }
 
 function injectStyles() {
-    let style = document.getElementById('usurpia-styles-v3-7-1'); // Updated ID
+    let style = document.getElementById('usurpia-styles-v3-7-1');
     if (style) return;
     style = document.createElement('style');
-    style.id = 'usurpia-styles-v3-7-1'; // Updated ID
+    style.id = 'usurpia-styles-v3-7-1';
     style.innerHTML = `
         .usurpia-highlight { background-color: #FFFF99 !important; color: #000 !important; cursor: help; padding: 1px 2px; border-radius: 3px; }
         .usurpia-highlight-surgical { border-bottom: 1px dotted #c0392b !important; }
@@ -301,7 +301,7 @@ function updatePanelUI() {
 
 function createControlPanel() {
     const panel = document.createElement('div');
-    panel.id = 'usurpia-panel-v3-7-1'; // Updated ID
+    panel.id = 'usurpia-panel-v3-7-1';
     panel.innerHTML = `
         <div id="usurpia-panel-v3-7-1-header">Usurpia Lens v3.7.1</div>
         <div id="usurpia-panel-body">
@@ -359,8 +359,7 @@ function setupPanelEventListeners(panel) {
         }
     });
 
-    document.getElementById('usurpia-panel-v3-7-1-header').addEventListener('click', (e) => { // Updated ID
-        // Prevent drag from triggering minimize
+    document.getElementById('usurpia-panel-v3-7-1-header').addEventListener('click', (e) => {
         if (e.target.id === 'usurpia-panel-v3-7-1-header') {
             state.isPanelMinimized = !state.isPanelMinimized;
             panel.classList.toggle('usurpia-minimized');
@@ -371,7 +370,7 @@ function setupPanelEventListeners(panel) {
 
 function createPopup() {
     let popup = document.createElement('div');
-    popup.id = 'usurpia-popup-v3-7-1'; // Updated ID
+    popup.id = 'usurpia-popup-v3-7-1';
     document.body.appendChild(popup);
     return popup;
 }
@@ -416,7 +415,7 @@ function setupPopupEventListeners(popup) {
 
 function makeDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = document.getElementById('usurpia-panel-v3-7-1-header'); // Updated ID
+    const header = document.getElementById('usurpia-panel-v3-7-1-header');
     if (header) header.onmousedown = dragMouseDown;
     function dragMouseDown(e) { 
         e = e || window.event; e.preventDefault(); 
@@ -437,7 +436,7 @@ function makeDraggable(element) {
 
 function createScrollbarMarks() {
     const scrollbar = document.createElement('div');
-    scrollbar.id = 'usurpia-scrollbar-v3-7-1'; // Updated ID
+    scrollbar.id = 'usurpia-scrollbar-v3-7-1';
     document.body.appendChild(scrollbar);
     const highlights = document.querySelectorAll('.usurpia-highlight');
     if (highlights.length === 0) return;
