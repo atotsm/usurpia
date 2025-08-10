@@ -207,8 +207,8 @@
                 
                 <div class="installer-box">
                     <h2>Installer: Usurpia Lens v3.7.2</h2>
-                    <!-- The bookmarklet link itself remains the same, as it dynamically loads the latest script -->
-                    <a id="bookmarklet" class="bookmarklet-button" href="javascript:(function(){var d=document,s=d.createElement('script');s.src='https://atotsm.github.io/usurpia/usurpia.js?v='+new Date().getTime();d.body.appendChild(s);})();">Drag Me to Your Bookmarks</a>
+                    <!-- === UPDATED BOOKMARKLET LINK === -->
+                    <a id="bookmarklet" class="bookmarklet-button" href="javascript:(function(){const s=document.createElement('script');s.src='https://atotsm.github.io/usurpia/usurpia.js?v='+Date.now();s.onerror=function(){alert('The Usurpia Lens script was blocked, likely by the site\'s Content Security Policy (CSP). This is common on major websites. For more info on the project, please visit zipcadia.gumroad.com');};document.body.appendChild(s);})();">Drag Me to Your Bookmarks</a>
                     <p class="instructions">On a desktop computer, <strong>click and drag this button</strong> to your browser's Bookmarks Bar to install.</p>
                     <p class="mobile-warning"><strong>Mobile Users:</strong> Installation can be tricky on mobile. We recommend visiting this page on a desktop for the best experience.</p>
                 </div>
@@ -222,13 +222,11 @@
                     <div class="next-step-card">
                         <h3>1. Get The Framework (Free)</h3>
                         <p>Get the complete "Lens" document that explains the Debt-Money Operating System. This is the free foundational text that powers the tool.</p>
-                        <!-- This link is now consistent with the 'free' link in the bookmarklet's config -->
                         <a href="https://zipcadia.gumroad.com" target="_blank">Download The Lens &rarr;</a>
                     </div>
                     <div class="next-step-card">
                         <h3>2. Become an Ambassador</h3>
                         <p>Ready to act? The Ambassador's Toolkit provides advanced strategies and tools for spreading this awareness within your own community and networks.</p>
-                        <!-- This link is now consistent with the 'paid' link in the bookmarklet's config -->
                         <a href="https://zipcadia.gumroad.com/l/bundle1" target="_blank">Get the Toolkit &rarr;</a>
                     </div>
                 </div>
